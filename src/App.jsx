@@ -11,7 +11,17 @@ function App() {
   const [detections, setDetections] = useState([])
   const [isRunning, setIsRunning] = useState(false)
 
-  const { videoRef, isStreaming, error: cameraError, startCamera, stopCamera } = useCamera()
+  const {
+    videoRef,
+    isStreaming,
+    error: cameraError,
+    devices,
+    selectedDevice,
+    startCamera,
+    stopCamera,
+    switchCamera
+  } = useCamera()
+
   const { model, isLoading, error: modelError, loadModel, startDetection, stopDetection } = useObjectDetection()
 
   // Track previously detected objects to avoid double-counting
@@ -23,7 +33,6 @@ function App() {
     const currentCount = objects.length
 
     // Only increment if we see MORE objects than before
-    // This handles the "toss into bag" scenario
     if (currentCount > prevCountRef.current) {
       const newBottles = currentCount - prevCountRef.current
       setCount(prev => prev + newBottles)
@@ -49,7 +58,7 @@ function App() {
     // Small delay to ensure video is playing
     setTimeout(() => {
       if (videoRef.current && activeModel) {
-        startDetection(videoRef.current, handleDetection, 8) // 8 FPS for mobile perf
+        startDetection(videoRef.current, handleDetection, 8)
       }
     }, 500)
   }
@@ -76,6 +85,12 @@ function App() {
     prevCountRef.current = 0
   }
 
+  // Handle camera switch
+  const handleCameraChange = async (e) => {
+    const deviceId = e.target.value
+    await switchCamera(deviceId)
+  }
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -94,6 +109,25 @@ function App() {
       </header>
 
       <main className="main">
+        {/* Camera selector */}
+        {devices.length > 1 && (
+          <div className="camera-selector">
+            <label htmlFor="camera-select">Camera:</label>
+            <select
+              id="camera-select"
+              value={selectedDevice || ''}
+              onChange={handleCameraChange}
+              className="camera-dropdown"
+            >
+              {devices.map((device, index) => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.label || `Camera ${index + 1}`}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <Camera
           videoRef={videoRef}
           isStreaming={isStreaming}
@@ -108,13 +142,18 @@ function App() {
 
         {error && (
           <div className="error">
-            {error}
+            <svg className="error-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p>{error}</p>
           </div>
         )}
 
         {isLoading && (
           <div className="loading">
-            Loading AI model...
+            <div className="loading-spinner"></div>
+            <p>Loading AI model...</p>
+            <p className="hint">This may take a moment</p>
           </div>
         )}
 
