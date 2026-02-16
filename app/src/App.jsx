@@ -234,11 +234,18 @@ function CounterPage() {
   )
 }
 
-// Root app — routing + auth gate
+// Root app — routing (no auth gate, counter-first)
 function App() {
-  const { user, loading } = useAuth()
+  const { user, loading, setupLocal } = useAuth()
 
-  if (loading) {
+  // Auto-setup local profile if no user — skip login, go straight to counter
+  useEffect(() => {
+    if (!loading && !user) {
+      setupLocal('NY', 'Counter')
+    }
+  }, [loading, user, setupLocal])
+
+  if (loading || !user) {
     return (
       <div className="app">
         <div className="loading-screen">
@@ -252,14 +259,9 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={user ? <CounterPage /> : <Auth />}
-        />
-        <Route
-          path="/settings"
-          element={user ? <Settings /> : <Navigate to="/" />}
-        />
+        <Route path="/" element={<CounterPage />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/login" element={<Auth />} />
       </Routes>
     </BrowserRouter>
   )
