@@ -46,7 +46,7 @@ function CounterPage() {
 
   const { user, profile } = useAuth()
   const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code)
-  const { videoRef, isStreaming, error: cameraError, startCamera, stopCamera } = useCamera()
+  const { videoRef, isStreaming, error: cameraError, debugLog, startCamera, stopCamera } = useCamera()
   const { model, isLoading, error: modelError, loadModel, startDetection, stopDetection } = useObjectDetection()
 
   // Detection history for debounce — track last N frames
@@ -234,6 +234,29 @@ function CounterPage() {
           </button>
         </div>
       </main>
+
+      {/* Debug panel — remove after camera is confirmed working */}
+      {debugLog.length > 0 && (
+        <div style={{
+          margin: '1rem',
+          padding: '0.75rem',
+          background: '#000',
+          borderRadius: '8px',
+          fontSize: '11px',
+          fontFamily: 'monospace',
+          color: '#10b981',
+          maxHeight: '150px',
+          overflow: 'auto',
+          whiteSpace: 'pre-wrap'
+        }}>
+          <strong>Camera Debug:</strong>
+          {debugLog.map((line, i) => (
+            <div key={i} style={{ color: line.includes('ERROR') || line.includes('FATAL') ? '#ef4444' : '#10b981' }}>
+              {line}
+            </div>
+          ))}
+        </div>
+      )}
 
       <footer className="footer">
         <p>Point camera at bottles & cans</p>
