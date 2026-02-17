@@ -8,40 +8,45 @@ export function useCamera() {
   const [devices, setDevices] = useState([])
   const [selectedDevice, setSelectedDevice] = useState(null)
   const streamRef = useRef(null)
+  const selectedDeviceRef = useRef(null)
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    selectedDeviceRef.current = selectedDevice
+  }, [selectedDevice])
 
   // Get list of available cameras
   const getDevices = useCallback(async () => {
     try {
       // Need to request permission first to get device labels
-      await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-        .then(stream => stream.getTracks().forEach(track => track.stop()))
+      const tempStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      tempStream.getTracks().forEach(track => track.stop())
 
       const allDevices = await navigator.mediaDevices.enumerateDevices()
       const videoDevices = allDevices.filter(device => device.kind === 'videoinput')
       setDevices(videoDevices)
 
-      // Auto-select first external camera (usually Logitech) or fallback to first
-      const externalCam = videoDevices.find(d =>
-        d.label.toLowerCase().includes('logitech') ||
-        d.label.toLowerCase().includes('external') ||
-        d.label.toLowerCase().includes('usb')
-      )
-      if (externalCam && !selectedDevice) {
-        setSelectedDevice(externalCam.deviceId)
-      } else if (videoDevices.length > 0 && !selectedDevice) {
-        setSelectedDevice(videoDevices[0].deviceId)
+      // Auto-select first external camera or fallback to first (only if none selected)
+      if (!selectedDeviceRef.current && videoDevices.length > 0) {
+        const externalCam = videoDevices.find(d =>
+          d.label.toLowerCase().includes('logitech') ||
+          d.label.toLowerCase().includes('external') ||
+          d.label.toLowerCase().includes('usb')
+        )
+        setSelectedDevice(externalCam ? externalCam.deviceId : videoDevices[0].deviceId)
       }
 
       return videoDevices
     } catch (err) {
       console.error('Error getting devices:', err)
+      setError('Camera permission denied. Please allow camera access.')
       return []
     }
-  }, [selectedDevice])
+  }, [])
 
   // Load devices on mount
   useEffect(() => {
-    getDevices()
+    void getDevices()
   }, [getDevices])
 
   const startCamera = useCallback(async (deviceId = selectedDevice) => {
@@ -70,8 +75,14 @@ export function useCamera() {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream
-        await videoRef.current.play()
-        setIsStreaming(true)
+        try {
+          await videoRef.current.play()
+          setIsStreaming(true)
+        } catch (playErr) {
+          console.error('Autoplay blocked:', playErr)
+          setError('Camera blocked by browser. Tap the video to start.')
+          setIsStreaming(false)
+        }
       }
     } catch (err) {
       console.error('Camera error:', err)

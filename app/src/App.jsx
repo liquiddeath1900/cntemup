@@ -100,11 +100,19 @@ function CounterPage() {
 
     await startCamera()
 
-    setTimeout(() => {
-      if (videoRef.current && activeModel) {
-        startDetection(videoRef.current, handleDetection)
+    // Wait for video to be ready before starting detection
+    const video = videoRef.current
+    if (video && activeModel) {
+      if (video.readyState >= 3) {
+        startDetection(video, handleDetection)
+      } else {
+        const onReady = () => {
+          video.removeEventListener('canplay', onReady)
+          startDetection(video, handleDetection)
+        }
+        video.addEventListener('canplay', onReady)
       }
-    }, 500)
+    }
   }
 
   const handleStop = () => {

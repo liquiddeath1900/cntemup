@@ -55,12 +55,20 @@ function App() {
     // Start camera
     await startCamera()
 
-    // Small delay to ensure video is playing
-    setTimeout(() => {
-      if (videoRef.current && activeModel) {
-        startDetection(videoRef.current, handleDetection, 8)
+    // Wait for video to be ready before starting detection
+    const video = videoRef.current
+    if (video && activeModel) {
+      const onReady = () => {
+        video.removeEventListener('canplay', onReady)
+        startDetection(video, handleDetection, 8)
       }
-    }, 500)
+      // If already playing, start immediately
+      if (video.readyState >= 3) {
+        startDetection(video, handleDetection, 8)
+      } else {
+        video.addEventListener('canplay', onReady)
+      }
+    }
   }
 
   // Stop scanning
