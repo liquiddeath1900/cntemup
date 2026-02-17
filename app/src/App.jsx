@@ -245,15 +245,17 @@ function CounterPage() {
 // Root app — routing (no auth gate, counter-first)
 function App() {
   const { user, loading, setupLocal } = useAuth()
+  const didSetup = useRef(false)
 
-  // Auto-setup local profile if no user — skip login, go straight to counter
-  useEffect(() => {
-    if (!loading && !user) {
-      setupLocal('NY', 'Counter')
-    }
-  }, [loading, user, setupLocal])
+  // Auto-setup local profile synchronously during render (not in useEffect)
+  // This prevents the loading screen race condition
+  if (!loading && !user && !didSetup.current) {
+    didSetup.current = true
+    setupLocal('NY', 'Counter')
+  }
 
-  if (loading || !user) {
+  // Only gate on auth initialization, not on user existence
+  if (loading) {
     return (
       <div className="app">
         <div className="loading-screen">

@@ -22,12 +22,12 @@ export function useCamera() {
         return
       }
 
-      // Try to get camera - works with webcams and mobile
+      // Try to get camera — prefer rear on mobile, fallback gracefully
       let stream
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: 'environment', // prefer rear camera on mobile
+            facingMode: { ideal: 'environment' },
             width: { ideal: 1280 },
             height: { ideal: 720 }
           },
@@ -45,39 +45,16 @@ export function useCamera() {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream
-        // Wait for video to be ready before calling play
-        await new Promise((resolve, reject) => {
-          const video = videoRef.current
-          if (!video) return reject(new Error('Video element not found'))
+        // Set streaming true immediately so UI updates
+        setIsStreaming(true)
 
-          // If already ready, resolve immediately
-          if (video.readyState >= 2) {
-            resolve()
-            return
-          }
-
-          const onLoaded = () => {
-            video.removeEventListener('loadeddata', onLoaded)
-            video.removeEventListener('error', onError)
-            resolve()
-          }
-          const onError = (e) => {
-            video.removeEventListener('loadeddata', onLoaded)
-            video.removeEventListener('error', onError)
-            reject(e)
-          }
-          video.addEventListener('loadeddata', onLoaded)
-          video.addEventListener('error', onError)
-        })
-
+        // Call play() as backup for autoPlay attribute
         try {
           await videoRef.current.play()
         } catch (playErr) {
-          // On iOS/Safari, autoplay may be blocked — set up tap-to-play
-          console.warn('Autoplay blocked, setting up tap-to-play:', playErr)
-          videoRef.current.setAttribute('controls', true)
+          // Autoplay blocked (iOS/Safari) — not fatal, video still shows
+          console.warn('Autoplay blocked:', playErr)
         }
-        setIsStreaming(true)
       }
     } catch (err) {
       console.error('Camera error:', err)
