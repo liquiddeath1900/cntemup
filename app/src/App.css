@@ -84,7 +84,7 @@ body {
 .camera-container {
   position: relative;
   width: 100%;
-  aspect-ratio: 4/3;
+  aspect-ratio: 3/4;
   background: var(--bg-light);
   border-radius: 12px;
   overflow: hidden;
