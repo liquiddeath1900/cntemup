@@ -530,6 +530,51 @@ body {
   line-height: 1.5;
 }
 
+/* Tap-to-play overlay for iOS autoplay blocked */
+.camera-tap-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  z-index: 10;
+}
+
+.camera-tap-overlay span {
+  padding: 1rem 2rem;
+  background: var(--primary);
+  color: white;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Camera switch button */
+.camera-switch-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: background 0.2s;
+}
+
+.camera-switch-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
 /* Safe area insets for iOS */
 @supports (padding: max(0px)) {
   .header {

@@ -46,7 +46,7 @@ function CounterPage() {
 
   const { user, profile } = useAuth()
   const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code)
-  const { videoRef, isStreaming, error: cameraError, debugLog, startCamera, stopCamera } = useCamera()
+  const { videoRef, isStreaming, videoReady, error: cameraError, debugLog, devices, startCamera, stopCamera, switchCamera, handleTapToPlay } = useCamera()
   const { model, isLoading, error: modelError, loadModel, startDetection, stopDetection } = useObjectDetection()
 
   // Detection history for debounce — track last N frames
@@ -99,21 +99,15 @@ function CounterPage() {
     }
 
     await startCamera()
-
-    // Wait for video to be ready before starting detection
-    const video = videoRef.current
-    if (video && activeModel) {
-      if (video.readyState >= 3) {
-        startDetection(video, handleDetection)
-      } else {
-        const onReady = () => {
-          video.removeEventListener('canplay', onReady)
-          startDetection(video, handleDetection)
-        }
-        video.addEventListener('canplay', onReady)
-      }
-    }
+    // Detection start is now gated by the videoReady useEffect below
   }
+
+  // Start detection only when video has real dimensions — prevents 0x0 canvas bug
+  useEffect(() => {
+    if (isRunning && videoReady && model && videoRef.current) {
+      startDetection(videoRef.current, handleDetection)
+    }
+  }, [isRunning, videoReady, model, startDetection, handleDetection, videoRef])
 
   const handleStop = () => {
     setIsRunning(false)
@@ -158,7 +152,8 @@ function CounterPage() {
     }
   }, [stopDetection, stopCamera])
 
-  const error = cameraError || modelError
+  // Don't show tap_to_play as an error — it's handled by Camera overlay
+  const error = (cameraError && cameraError !== 'tap_to_play') ? cameraError : modelError
 
   return (
     <div className="app">
@@ -174,7 +169,12 @@ function CounterPage() {
         <Camera
           videoRef={videoRef}
           isStreaming={isStreaming}
+          videoReady={videoReady}
           detections={detections}
+          error={cameraError}
+          devices={devices}
+          onTapToPlay={handleTapToPlay}
+          onSwitchCamera={switchCamera}
         />
 
         <Counter
@@ -192,7 +192,7 @@ function CounterPage() {
         )}
 
         {isLoading && (
-          <div className="loading">Loading AI model...</div>
+          <div className="loading">Loading AI model... this may take a few seconds</div>
         )}
 
         <div className="controls">

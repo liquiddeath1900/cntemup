@@ -4,14 +4,25 @@ import '@tensorflow/tfjs'
 
 // Detection configuration — tune these values for accuracy vs performance
 export const DETECTION_CONFIG = {
-  // Only count actual bottles/cans — cups and wine glasses cause false positives
-  targetClasses: ['bottle'],
-  // Lower threshold catches more bottles but may increase false positives
+  // Bottle + cup (cup is closest COCO class to "can")
+  targetClasses: ['bottle', 'cup'],
+  // Per-class confidence thresholds — cups need higher to reduce false positives
+  confidenceThresholds: {
+    bottle: 0.35,
+    cup: 0.5,
+  },
+  // Default fallback threshold
   confidenceThreshold: 0.35,
   // Higher FPS = smoother tracking, costs more battery
   detectionFps: 15,
   // Frames an object must persist before counting (prevents flicker)
   requiredConsecutiveFrames: 3,
+}
+
+// Map COCO-SSD class names to user-friendly display labels
+export const CLASS_DISPLAY_NAMES = {
+  bottle: 'bottle',
+  cup: 'can',
 }
 
 // Model configuration — structured for future YOLOv8 swap
@@ -67,17 +78,26 @@ export function useObjectDetection() {
   // Detect objects in a single video frame
   const detectObjects = useCallback(async (videoElement) => {
     if (!model || !videoElement) return []
+    // Skip detection if video has no dimensions yet
+    if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) return []
 
     try {
       const predictions = await model.detect(videoElement)
       const config = MODEL_CONFIG[modelConfigRef.current]
       const normalized = config.normalize(predictions)
 
-      // Filter to target classes above confidence threshold
-      return normalized.filter(p =>
-        DETECTION_CONFIG.targetClasses.includes(p.class) &&
-        p.score > DETECTION_CONFIG.confidenceThreshold
-      )
+      // Filter to target classes with per-class confidence thresholds
+      return normalized
+        .filter(p => {
+          if (!DETECTION_CONFIG.targetClasses.includes(p.class)) return false
+          const threshold = DETECTION_CONFIG.confidenceThresholds[p.class] || DETECTION_CONFIG.confidenceThreshold
+          return p.score > threshold
+        })
+        .map(p => ({
+          ...p,
+          // Add display name for UI (e.g. "cup" → "can")
+          displayClass: CLASS_DISPLAY_NAMES[p.class] || p.class,
+        }))
     } catch (err) {
       console.error('Detection error:', err)
       return []
