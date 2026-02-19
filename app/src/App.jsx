@@ -235,8 +235,8 @@ function CounterPage() {
         </div>
       </main>
 
-      {/* Debug panel — remove after camera is confirmed working */}
-      {debugLog.length > 0 && (
+      {/* Debug panel — only visible in dev mode */}
+      {import.meta.env.DEV && debugLog.length > 0 && (
         <div style={{
           margin: '1rem',
           padding: '0.75rem',
