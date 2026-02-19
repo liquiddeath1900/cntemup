@@ -80,14 +80,15 @@ body {
   overflow-y: auto;
 }
 
-/* Camera container */
+/* Camera container — 16:9 keeps camera + counter visible without scrolling */
 .camera-container {
   position: relative;
   width: 100%;
-  aspect-ratio: 3/4;
+  aspect-ratio: 16/9;
   background: var(--bg-light);
   border-radius: 12px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .camera-video {
