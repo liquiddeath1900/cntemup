@@ -80,11 +80,12 @@ body {
   overflow-y: auto;
 }
 
-/* Camera container — 16:9 keeps camera + counter visible without scrolling */
+/* Camera container — takes up half the screen height */
 .camera-container {
   position: relative;
   width: 100%;
-  aspect-ratio: 16/9;
+  height: 50vh;
+  height: 50dvh;
   background: var(--bg-light);
   border-radius: 12px;
   overflow: hidden;
