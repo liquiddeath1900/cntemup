@@ -13,6 +13,7 @@
     "@supabase/supabase-js": "^2.95.3",
     "@tensorflow-models/coco-ssd": "^2.2.3",
     "@tensorflow/tfjs": "^4.22.0",
+    "onnxruntime-web": "^1.24.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.0",

@@ -10,6 +10,7 @@ export default defineConfig({
       workbox: {
         skipWaiting: true,
         clientsClaim: true,
+        maximumFileSizeToCacheInBytes: 30 * 1024 * 1024, // 30MB for ONNX WASM
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {

@@ -5,7 +5,8 @@ import { Counter } from './components/Counter'
 import { Auth } from './components/Auth'
 import { Settings } from './components/Settings'
 import { useCamera } from './hooks/useCamera'
-import { useObjectDetection, DETECTION_CONFIG } from './hooks/useObjectDetection'
+import { useDetection } from './hooks/useDetection'
+import { DETECTION_CONFIG } from './hooks/useObjectDetection'
 import { useAuth } from './hooks/useAuth'
 import { useDepositRules } from './hooks/useDepositRules'
 import { createTracker } from './utils/tracker'
@@ -48,7 +49,7 @@ function CounterPage() {
   const { user, profile } = useAuth()
   const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code)
   const { videoRef, isStreaming, videoReady, error: cameraError, debugLog, devices, startCamera, stopCamera, switchCamera, handleTapToPlay } = useCamera()
-  const { model, isLoading, loadProgress, error: modelError, loadModel, startDetection, stopDetection } = useObjectDetection()
+  const { model, isLoading, loadProgress, error: modelError, loadModel, startDetection, stopDetection, modelType } = useDetection()
 
   // Object tracker — persists across frames, prevents double-counting
   const trackerRef = useRef(createTracker({
@@ -275,6 +276,9 @@ function CounterPage() {
 
       <footer className="gb-footer">
         <p>Point at bottles & cans</p>
+        <p style={{ fontSize: '7px', marginTop: '2px', opacity: 0.5 }}>
+          {modelType === 'yolo' ? 'YOLOv8 Custom' : 'COCO-SSD'} engine
+        </p>
       </footer>
     </div>
   )
