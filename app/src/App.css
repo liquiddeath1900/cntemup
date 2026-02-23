@@ -8,10 +8,10 @@
 }
 
 :root {
-  /* Game Boy Color palette */
-  --gb-shell: #2c2137;
-  --gb-shell-light: #3d2f4a;
-  --gb-shell-dark: #1a1525;
+  /* Game Boy DMG grey palette */
+  --gb-shell: #c0b8a8;
+  --gb-shell-light: #d0c9b8;
+  --gb-shell-dark: #a8a090;
   --gb-screen-bg: #0f380f;
   --gb-screen-light: #9bbc0f;
   --gb-screen-dark: #306230;
@@ -37,8 +37,8 @@
 
 body {
   font-family: 'Press Start 2P', monospace;
-  background: var(--gb-shell-dark);
-  color: var(--gb-text);
+  background: var(--gb-shell);
+  color: #2a2a2a;
   min-height: 100vh;
   min-height: 100dvh;
   overflow: hidden;
@@ -62,7 +62,7 @@ body {
 .gb-label {
   text-align: center;
   padding: clamp(6px, 1.5vh, 12px) var(--screen-pad);
-  background: linear-gradient(180deg, var(--gb-shell-light), var(--gb-shell));
+  background: linear-gradient(180deg, #d0c9b8, var(--gb-shell));
   flex-shrink: 0;
   position: relative;
 }
@@ -70,15 +70,15 @@ body {
 .gb-label h1 {
   font-family: 'Press Start 2P', monospace;
   font-size: var(--font-lg);
-  color: var(--gb-screen-light);
-  text-shadow: 2px 2px 0 var(--gb-screen-dark);
+  color: #1a1a6e;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.15);
   letter-spacing: 0.05em;
 }
 
 .gb-label p {
   font-family: 'Press Start 2P', monospace;
   font-size: var(--font-xs);
-  color: var(--gb-text-dim);
+  color: #5a5a5a;
   margin-top: 2px;
 }
 
@@ -91,16 +91,16 @@ body {
 .settings-link {
   font-family: 'Press Start 2P', monospace;
   font-size: var(--font-xs);
-  color: var(--gb-text-dim);
+  color: #5a5a5a;
   text-decoration: none;
   padding: 4px 8px;
-  border: 1px solid var(--gb-text-dim);
+  border: 1px solid #999;
   border-radius: 4px;
 }
 
 .settings-link:active {
-  color: var(--gb-text);
-  border-color: var(--gb-text);
+  color: #1a1a6e;
+  border-color: #1a1a6e;
 }
 
 /* ===== LCD SCREEN BEZEL ===== */
@@ -110,12 +110,12 @@ body {
   flex-direction: column;
   margin: var(--screen-pad);
   padding: clamp(6px, 1.5vw, 10px);
-  background: #1a1a2e;
+  background: #4a4a4a;
   border-radius: clamp(8px, 2vw, 16px);
-  border: 3px solid #111;
+  border: 3px solid #333;
   box-shadow:
-    inset 0 2px 8px rgba(0, 0, 0, 0.6),
-    0 2px 4px rgba(0, 0, 0, 0.4);
+    inset 0 2px 8px rgba(0, 0, 0, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.2);
   min-height: 0;
   overflow: hidden;
   position: relative;
@@ -353,11 +353,11 @@ body {
 
 .gb-dpad-minus,
 .gb-dpad-plus {
-  background: linear-gradient(180deg, #3d3d5c, #2a2a40);
-  color: var(--gb-text);
+  background: linear-gradient(180deg, #3a3a5c, #2a2a3e);
+  color: #ddd;
   box-shadow:
     0 4px 0 #1a1a2e,
-    0 6px 8px rgba(0, 0, 0, 0.3);
+    0 6px 8px rgba(0, 0, 0, 0.25);
 }
 
 .gb-dpad-minus:active,
@@ -410,23 +410,23 @@ body {
 }
 
 .gb-start-btn {
-  background: linear-gradient(180deg, #4a4a6a, #33334d);
-  color: var(--gb-text);
-  box-shadow: 0 3px 0 #1a1a2e;
+  background: linear-gradient(180deg, #8a8a8a, #6a6a6a);
+  color: #fff;
+  box-shadow: 0 3px 0 #444;
 }
 
 .gb-start-btn:active {
-  box-shadow: 0 1px 0 #1a1a2e;
+  box-shadow: 0 1px 0 #444;
 }
 
 .gb-reset-btn {
-  background: linear-gradient(180deg, #4a4a6a, #33334d);
-  color: var(--gb-text-dim);
-  box-shadow: 0 3px 0 #1a1a2e;
+  background: linear-gradient(180deg, #8a8a8a, #6a6a6a);
+  color: #ddd;
+  box-shadow: 0 3px 0 #444;
 }
 
 .gb-reset-btn:active {
-  box-shadow: 0 1px 0 #1a1a2e;
+  box-shadow: 0 1px 0 #444;
 }
 
 .gb-stop-btn {
@@ -454,7 +454,7 @@ body {
   font-size: var(--font-xs);
   background: none;
   border: none;
-  color: var(--gb-text-dim);
+  color: #777;
   cursor: pointer;
   padding: 4px 8px;
 }
@@ -517,14 +517,14 @@ body {
 .loading-screen h1 {
   font-family: 'Press Start 2P', monospace;
   font-size: var(--font-lg);
-  color: var(--gb-screen-light);
-  text-shadow: 2px 2px 0 var(--gb-screen-dark);
+  color: #1a1a6e;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.1);
 }
 
 .loading-screen p {
   font-family: 'Press Start 2P', monospace;
   font-size: var(--font-xs);
-  color: var(--gb-text-dim);
+  color: #777;
   animation: gbBlink 1s step-end infinite;
 }
 
@@ -602,7 +602,7 @@ body {
 .gb-footer p {
   font-family: 'Press Start 2P', monospace;
   font-size: var(--font-xs);
-  color: var(--gb-text-dim);
+  color: #777;
 }
 
 /* ===== AUTH STYLES (keep working) ===== */
