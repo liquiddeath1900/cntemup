@@ -217,7 +217,7 @@ function CounterPage() {
 
       {/* Controls — D-pad + action buttons */}
       <div className="gb-controls">
-        {/* D-pad row: [-] [SCAN/STOP] [+] */}
+        {/* D-pad row: [-] [START/STOP] [+] */}
         <div className="gb-dpad-row">
           <button className="gb-dpad-btn gb-dpad-minus" onClick={handleManualSub}>−</button>
 
@@ -227,7 +227,7 @@ function CounterPage() {
               onClick={handleStart}
               disabled={isLoading}
             >
-              {isLoading ? '...' : 'SCAN'}
+              {isLoading ? '...' : 'START'}
             </button>
           ) : (
             <button className="gb-dpad-btn gb-scan-btn gb-stop-btn" onClick={handleStop}>
@@ -241,7 +241,7 @@ function CounterPage() {
         {/* Action buttons */}
         <div className="gb-action-row">
           <button className="gb-action-btn gb-start-btn" onClick={isRunning ? handleStop : handleStart} disabled={isLoading}>
-            {isRunning ? 'STOP' : 'START'}
+            {isRunning ? 'STOP' : 'PAUSE'}
           </button>
           <button className="gb-action-btn gb-reset-btn" onClick={handleReset}>RESET</button>
         </div>
