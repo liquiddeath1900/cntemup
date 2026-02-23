@@ -1,4 +1,5 @@
-/* CNTEM'UP - Mobile-first styles */
+/* CNTEM'UP — Game Boy Color Theme */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 * {
   box-sizing: border-box;
@@ -7,90 +8,164 @@
 }
 
 :root {
-  --primary: #10b981;
-  --primary-dark: #059669;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  --bg: #0f172a;
-  --bg-light: #1e293b;
-  --bg-card: #1e293b;
-  --text: #f8fafc;
-  --text-muted: #94a3b8;
-  --border: #334155;
+  /* Game Boy Color palette */
+  --gb-shell: #2c2137;
+  --gb-shell-light: #3d2f4a;
+  --gb-shell-dark: #1a1525;
+  --gb-screen-bg: #0f380f;
+  --gb-screen-light: #9bbc0f;
+  --gb-screen-dark: #306230;
+  --gb-screen-glow: rgba(155, 188, 15, 0.15);
+  --gb-btn-a: #a83240;
+  --gb-btn-b: #a83240;
+  --gb-btn-dpad: #2c2137;
+  --gb-accent: #10b981;
+  --gb-text: #9bbc0f;
+  --gb-text-dim: #306230;
+  --gb-danger: #ef4444;
+  --gb-warning: #f59e0b;
+
+  /* Responsive sizing */
+  --screen-pad: clamp(8px, 2vw, 16px);
+  --font-xs: clamp(8px, 2vw, 10px);
+  --font-sm: clamp(10px, 2.5vw, 12px);
+  --font-md: clamp(12px, 3vw, 14px);
+  --font-lg: clamp(16px, 4vw, 20px);
+  --font-xl: clamp(24px, 7vw, 36px);
+  --font-xxl: clamp(32px, 9vw, 48px);
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  font-family: 'Press Start 2P', monospace;
+  background: var(--gb-shell-dark);
+  color: var(--gb-text);
   min-height: 100vh;
   min-height: 100dvh;
   overflow: hidden;
+  -webkit-font-smoothing: none;
 }
 
+/* ===== GAME BOY SHELL ===== */
 .app {
   display: flex;
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
-  max-width: 500px;
+  max-width: 430px;
   margin: 0 auto;
+  background: var(--gb-shell);
+  position: relative;
+  overflow: hidden;
 }
 
-/* Header */
-.header {
+/* Top label area — "CNTEM'UP" branding */
+.gb-label {
   text-align: center;
-  padding: 0.5rem 1rem;
-  background: var(--bg-light);
+  padding: clamp(6px, 1.5vh, 12px) var(--screen-pad);
+  background: linear-gradient(180deg, var(--gb-shell-light), var(--gb-shell));
   flex-shrink: 0;
+  position: relative;
 }
 
-.header-row {
+.gb-label h1 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-lg);
+  color: var(--gb-screen-light);
+  text-shadow: 2px 2px 0 var(--gb-screen-dark);
+  letter-spacing: 0.05em;
+}
+
+.gb-label p {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  color: var(--gb-text-dim);
+  margin-top: 2px;
+}
+
+.gb-label-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.header h1 {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: var(--primary);
-  letter-spacing: -0.02em;
-}
-
-.header p {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
-
-.settings-link,
-.back-link {
-  color: var(--primary);
+.settings-link {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  color: var(--gb-text-dim);
   text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 500;
+  padding: 4px 8px;
+  border: 1px solid var(--gb-text-dim);
+  border-radius: 4px;
 }
 
-/* Main content — no scroll, everything fits on screen */
-.main {
+.settings-link:active {
+  color: var(--gb-text);
+  border-color: var(--gb-text);
+}
+
+/* ===== LCD SCREEN BEZEL ===== */
+.gb-screen-bezel {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0.5rem;
-  gap: 0.5rem;
-  overflow: hidden;
+  margin: var(--screen-pad);
+  padding: clamp(6px, 1.5vw, 10px);
+  background: #1a1a2e;
+  border-radius: clamp(8px, 2vw, 16px);
+  border: 3px solid #111;
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.6),
+    0 2px 4px rgba(0, 0, 0, 0.4);
   min-height: 0;
+  overflow: hidden;
+  position: relative;
 }
 
-/* Camera container — takes up half the available space */
+/* Inner LCD glow */
+.gb-screen-bezel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 30px var(--gb-screen-glow);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ===== CAMERA / SCREEN AREA ===== */
+.gb-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: clamp(4px, 1vw, 8px);
+}
+
 .camera-container {
   position: relative;
   width: 100%;
   flex: 1;
   min-height: 0;
-  background: var(--bg-light);
-  border-radius: 12px;
+  background: var(--gb-screen-bg);
+  border-radius: clamp(4px, 1vw, 8px);
   overflow: hidden;
+  border: 2px solid var(--gb-screen-dark);
+}
+
+/* Scan line overlay on camera */
+.camera-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 2;
 }
 
 .camera-video {
@@ -116,222 +191,320 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  color: var(--text-muted);
+  color: var(--gb-text-dim);
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
 }
 
 .camera-placeholder span {
-  font-size: 3rem;
+  font-size: clamp(24px, 8vw, 40px);
 }
 
-/* Counter */
-.counter-container {
+/* ===== LCD COUNT DISPLAY ===== */
+.gb-lcd-count {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  background: var(--bg-light);
-  border-radius: 12px;
+  justify-content: center;
+  gap: clamp(8px, 2vw, 16px);
+  padding: clamp(6px, 1.5vw, 10px);
+  background: var(--gb-screen-bg);
+  border-radius: clamp(4px, 1vw, 6px);
+  border: 2px solid var(--gb-screen-dark);
   flex-shrink: 0;
 }
 
-.counter-main {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.gb-lcd-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  color: var(--gb-text-dim);
 }
 
-.counter-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
+.gb-lcd-value {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xl);
+  color: var(--gb-screen-light);
+  text-shadow: 0 0 8px rgba(155, 188, 15, 0.5);
+  min-width: 3ch;
+  text-align: right;
 }
 
-.counter-value {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: var(--primary);
-  line-height: 1;
-}
-
-.counter-session {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.counter-session-value {
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-/* Deposit value */
-.counter-deposit {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  background: rgba(16, 185, 129, 0.1);
-  border-radius: 8px;
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
-.counter-deposit-value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.counter-deposit-label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-/* State badge */
-.state-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.state-badge.has-deposit {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--primary);
-}
-
-.state-badge.no-deposit {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--warning);
-}
-
-.state-badge-note {
-  font-weight: 400;
-  font-size: 0.7rem;
-}
-
-.counter-special-hint {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  font-style: italic;
-}
-
-.detecting-indicator {
+.gb-lcd-session {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--primary);
+  gap: clamp(4px, 1vw, 8px);
 }
 
-.pulse {
-  width: 8px;
-  height: 8px;
-  background: var(--primary);
+.gb-lcd-session-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  color: var(--gb-text-dim);
+}
+
+.gb-lcd-session-value {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-md);
+  color: var(--gb-screen-light);
+}
+
+/* Deposit value in LCD */
+.gb-lcd-deposit {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 1vw, 8px);
+  padding: clamp(4px, 1vw, 8px);
+  background: rgba(155, 188, 15, 0.1);
+  border-radius: 4px;
+  border: 1px solid var(--gb-screen-dark);
+  flex-shrink: 0;
+}
+
+.gb-lcd-deposit-value {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-md);
+  color: var(--gb-screen-light);
+}
+
+.gb-lcd-deposit-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  color: var(--gb-text-dim);
+}
+
+/* ===== DETECTING INDICATOR ===== */
+.gb-detecting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  color: var(--gb-screen-light);
+  padding: 2px 0;
+}
+
+.gb-pulse {
+  width: 6px;
+  height: 6px;
+  background: var(--gb-screen-light);
   border-radius: 50%;
-  animation: pulse 1.5s ease-in-out infinite;
+  animation: gbPulse 1s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.2); }
+@keyframes gbPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 
-/* Controls */
-.controls {
+/* Detection confidence badge */
+.gb-detection-badge {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: clamp(3px, 0.8vw, 6px);
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  color: var(--gb-screen-light);
   flex-shrink: 0;
 }
 
-.btn {
-  flex: 1;
-  min-width: 45%;
-  padding: 0.75rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
+.gb-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gb-btn-a);
 }
 
-.btn:disabled {
+/* ===== CONTROLS AREA (below screen) ===== */
+.gb-controls {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 2vh, 14px);
+  padding: clamp(8px, 2vh, 14px) var(--screen-pad);
+  flex-shrink: 0;
+}
+
+/* D-pad row: [-] [SCAN] [+] */
+.gb-dpad-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 4vw, 24px);
+}
+
+.gb-dpad-btn {
+  width: clamp(44px, 12vw, 56px);
+  height: clamp(44px, 12vw, 56px);
+  border-radius: 50%;
+  border: none;
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-lg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s, box-shadow 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gb-dpad-btn:active {
+  transform: scale(0.93) translateY(2px);
+}
+
+.gb-dpad-minus,
+.gb-dpad-plus {
+  background: linear-gradient(180deg, #3d3d5c, #2a2a40);
+  color: var(--gb-text);
+  box-shadow:
+    0 4px 0 #1a1a2e,
+    0 6px 8px rgba(0, 0, 0, 0.3);
+}
+
+.gb-dpad-minus:active,
+.gb-dpad-plus:active {
+  box-shadow: 0 1px 0 #1a1a2e;
+}
+
+/* Center scan button — big red A button */
+.gb-scan-btn {
+  width: clamp(56px, 15vw, 72px);
+  height: clamp(56px, 15vw, 72px);
+  background: linear-gradient(180deg, #c8384a, var(--gb-btn-a));
+  color: white;
+  font-size: var(--font-xs);
+  box-shadow:
+    0 5px 0 #7a1f2a,
+    0 8px 12px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0;
+}
+
+.gb-scan-btn:active {
+  box-shadow: 0 2px 0 #7a1f2a;
+}
+
+.gb-scan-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.btn-primary {
-  background: var(--primary);
+/* Action buttons row: START / RESET */
+.gb-action-row {
+  display: flex;
+  justify-content: center;
+  gap: clamp(12px, 4vw, 24px);
+}
+
+.gb-action-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  padding: clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px);
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gb-action-btn:active {
+  transform: scale(0.95) translateY(1px);
+}
+
+.gb-start-btn {
+  background: linear-gradient(180deg, #4a4a6a, #33334d);
+  color: var(--gb-text);
+  box-shadow: 0 3px 0 #1a1a2e;
+}
+
+.gb-start-btn:active {
+  box-shadow: 0 1px 0 #1a1a2e;
+}
+
+.gb-reset-btn {
+  background: linear-gradient(180deg, #4a4a6a, #33334d);
+  color: var(--gb-text-dim);
+  box-shadow: 0 3px 0 #1a1a2e;
+}
+
+.gb-reset-btn:active {
+  box-shadow: 0 1px 0 #1a1a2e;
+}
+
+.gb-stop-btn {
+  background: linear-gradient(180deg, #c8384a, var(--gb-btn-a));
   color: white;
+  box-shadow: 0 3px 0 #7a1f2a;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: var(--primary-dark);
+.gb-stop-btn:active {
+  box-shadow: 0 1px 0 #7a1f2a;
 }
 
-.btn-danger {
-  background: var(--danger);
+.gb-save-btn {
+  background: linear-gradient(180deg, #2d8a5e, #1a6b42);
   color: white;
+  box-shadow: 0 3px 0 #0f4a2d;
 }
 
-.btn-secondary {
-  background: var(--bg-light);
-  color: var(--text);
-  border: 1px solid var(--text-muted);
+.gb-save-btn:active {
+  box-shadow: 0 1px 0 #0f4a2d;
 }
 
-.btn-ghost {
-  background: transparent;
-  color: var(--text-muted);
+.gb-clear-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  background: none;
+  border: none;
+  color: var(--gb-text-dim);
+  cursor: pointer;
+  padding: 4px 8px;
 }
 
-.btn-manual {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--primary);
-  border: 2px dashed var(--primary);
-  font-size: 1.125rem;
+/* ===== MODEL LOADING BAR ===== */
+.gb-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: clamp(4px, 1vw, 8px);
+  flex-shrink: 0;
 }
 
-.btn-manual:hover {
-  background: rgba(16, 185, 129, 0.25);
+.gb-loading-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  color: var(--gb-screen-light);
+  animation: gbBlink 1s step-end infinite;
 }
 
-.btn-google {
-  background: white;
-  color: #333;
-  border: 1px solid var(--border);
+@keyframes gbBlink {
+  50% { opacity: 0; }
 }
 
-.btn-google:hover {
-  background: #f0f0f0;
+.gb-loading-bar {
+  width: 80%;
+  height: 8px;
+  background: var(--gb-screen-dark);
+  border-radius: 4px;
+  overflow: hidden;
 }
 
-/* Error & Loading */
-.error {
-  padding: 0.75rem;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid var(--danger);
-  border-radius: 8px;
-  color: var(--danger);
-  font-size: 0.875rem;
+.gb-loading-fill {
+  height: 100%;
+  background: var(--gb-screen-light);
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+/* ===== ERROR DISPLAY ===== */
+.gb-error {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  color: var(--gb-danger);
   text-align: center;
+  padding: clamp(4px, 1vw, 8px);
 }
 
-.loading {
-  padding: 0.75rem;
-  background: rgba(16, 185, 129, 0.1);
-  border-radius: 8px;
-  color: var(--primary);
-  font-size: 0.875rem;
-  text-align: center;
-}
-
+/* ===== LOADING SCREEN ===== */
 .loading-screen {
   flex: 1;
   display: flex;
@@ -342,201 +515,20 @@ body {
 }
 
 .loading-screen h1 {
-  font-size: 2rem;
-  color: var(--primary);
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-lg);
+  color: var(--gb-screen-light);
+  text-shadow: 2px 2px 0 var(--gb-screen-dark);
 }
 
-/* Footer */
-.footer {
-  text-align: center;
-  padding: 1rem;
-  color: var(--text-muted);
-  font-size: 0.75rem;
+.loading-screen p {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  color: var(--gb-text-dim);
+  animation: gbBlink 1s step-end infinite;
 }
 
-/* Auth styles */
-.auth-card {
-  background: var(--bg-card);
-  border-radius: 12px;
-  padding: 2rem 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.auth-card h2 {
-  text-align: center;
-  font-size: 1.25rem;
-}
-
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.auth-input {
-  width: 100%;
-  padding: 0.875rem 1rem;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text);
-  font-size: 1rem;
-}
-
-.auth-input:focus {
-  outline: none;
-  border-color: var(--primary);
-}
-
-.auth-error {
-  color: var(--danger);
-  font-size: 0.875rem;
-  text-align: center;
-}
-
-.auth-divider {
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.875rem;
-  position: relative;
-}
-
-.auth-divider::before,
-.auth-divider::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 40%;
-  height: 1px;
-  background: var(--border);
-}
-
-.auth-divider::before { left: 0; }
-.auth-divider::after { right: 0; }
-
-.auth-subtitle {
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.875rem;
-}
-
-.auth-toggle {
-  font-size: 0.875rem;
-  text-align: center;
-}
-
-/* State selector */
-.state-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.state-selector-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
-}
-
-.state-selector-select {
-  width: 100%;
-  padding: 0.875rem 1rem;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text);
-  font-size: 1rem;
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 1.25rem;
-}
-
-.state-selector-select:focus {
-  outline: none;
-  border-color: var(--primary);
-}
-
-.state-no-deposit {
-  color: var(--warning);
-  font-size: 0.8rem;
-  padding: 0.5rem;
-  background: rgba(245, 158, 11, 0.1);
-  border-radius: 6px;
-}
-
-/* Settings styles */
-.settings-card {
-  background: var(--bg-card);
-  border-radius: 12px;
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.settings-card h3 {
-  font-size: 1rem;
-  color: var(--primary);
-}
-
-.settings-email {
-  font-size: 0.875rem;
-  color: var(--text);
-}
-
-.settings-name {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-.settings-mode {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-style: italic;
-}
-
-/* Rules display */
-.rules-info {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.rules-rate {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.rules-rate-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-.rules-rate-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.rules-special p,
-.rules-beverages p,
-.rules-notes p {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-
-/* Tap-to-play overlay for iOS autoplay blocked */
+/* ===== CAMERA OVERLAYS ===== */
 .camera-tap-overlay {
   position: absolute;
   inset: 0;
@@ -549,22 +541,21 @@ body {
 }
 
 .camera-tap-overlay span {
-  padding: 1rem 2rem;
-  background: var(--primary);
+  font-family: 'Press Start 2P', monospace;
+  padding: 1rem 1.5rem;
+  background: var(--gb-btn-a);
   color: white;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  animation: pulse 1.5s ease-in-out infinite;
+  border-radius: 8px;
+  font-size: var(--font-xs);
+  animation: gbPulse 1.5s ease-in-out infinite;
 }
 
-/* Camera switch button */
 .camera-switch-btn {
   position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  width: 40px;
-  height: 40px;
+  top: 6px;
+  right: 6px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: none;
   background: rgba(0, 0, 0, 0.5);
@@ -574,19 +565,325 @@ body {
   justify-content: center;
   cursor: pointer;
   z-index: 5;
-  transition: background 0.2s;
 }
 
-.camera-switch-btn:hover {
-  background: rgba(0, 0, 0, 0.7);
+/* ===== STATE BADGE ===== */
+.state-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
 }
 
-/* Safe area insets for iOS */
+.state-badge.has-deposit {
+  background: rgba(155, 188, 15, 0.15);
+  color: var(--gb-screen-light);
+}
+
+.state-badge.no-deposit {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--gb-warning);
+}
+
+.state-badge-note {
+  font-size: var(--font-xs);
+}
+
+/* ===== FOOTER ===== */
+.gb-footer {
+  text-align: center;
+  padding: clamp(4px, 1vh, 8px) var(--screen-pad);
+  flex-shrink: 0;
+}
+
+.gb-footer p {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  color: var(--gb-text-dim);
+}
+
+/* ===== AUTH STYLES (keep working) ===== */
+.auth-card {
+  background: var(--gb-shell-light);
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.auth-card h2 {
+  text-align: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-md);
+  color: var(--gb-text);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: var(--gb-shell-dark);
+  border: 1px solid var(--gb-text-dim);
+  border-radius: 8px;
+  color: var(--gb-text);
+  font-family: monospace;
+  font-size: 1rem;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--gb-screen-light);
+}
+
+.auth-error {
+  color: var(--gb-danger);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.auth-divider {
+  text-align: center;
+  color: var(--gb-text-dim);
+  font-size: 0.875rem;
+  position: relative;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: var(--gb-text-dim);
+}
+
+.auth-divider::before { left: 0; }
+.auth-divider::after { right: 0; }
+
+.auth-subtitle {
+  text-align: center;
+  color: var(--gb-text-dim);
+  font-size: 0.875rem;
+}
+
+.auth-toggle {
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* ===== GENERIC BUTTONS (for auth/settings pages) ===== */
+.btn {
+  flex: 1;
+  min-width: 45%;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: monospace;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--gb-accent);
+  color: white;
+}
+
+.btn-danger {
+  background: var(--gb-danger);
+  color: white;
+}
+
+.btn-secondary {
+  background: var(--gb-shell-light);
+  color: var(--gb-text);
+  border: 1px solid var(--gb-text-dim);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--gb-text-dim);
+}
+
+.btn-google {
+  background: white;
+  color: #333;
+  border: 1px solid var(--gb-text-dim);
+}
+
+/* ===== STATE SELECTOR ===== */
+.state-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.state-selector-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gb-text-dim);
+}
+
+.state-selector-select {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: var(--gb-shell-dark);
+  border: 1px solid var(--gb-text-dim);
+  border-radius: 8px;
+  color: var(--gb-text);
+  font-size: 1rem;
+  appearance: none;
+}
+
+.state-selector-select:focus {
+  outline: none;
+  border-color: var(--gb-screen-light);
+}
+
+.state-no-deposit {
+  color: var(--gb-warning);
+  font-size: 0.8rem;
+  padding: 0.5rem;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: 6px;
+}
+
+/* ===== SETTINGS ===== */
+.settings-card {
+  background: var(--gb-shell-light);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.settings-card h3 {
+  font-size: 1rem;
+  color: var(--gb-screen-light);
+}
+
+.settings-email { font-size: 0.875rem; color: var(--gb-text); }
+.settings-name { font-size: 0.8rem; color: var(--gb-text-dim); }
+.settings-mode { font-size: 0.8rem; color: var(--gb-text-dim); font-style: italic; }
+
+.back-link {
+  color: var(--gb-screen-light);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+/* Settings page uses old .header/.main for layout */
+.header {
+  text-align: center;
+  padding: 0.5rem 1rem;
+  background: var(--gb-shell-light);
+  flex-shrink: 0;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--gb-screen-light);
+}
+
+.header p {
+  font-size: 0.875rem;
+  color: var(--gb-text-dim);
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+  gap: 0.5rem;
+  overflow: auto;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Rules display */
+.rules-info { display: flex; flex-direction: column; gap: 1rem; }
+.rules-rate { display: flex; justify-content: space-between; align-items: center; }
+.rules-rate-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gb-text-dim); display: block; margin-bottom: 0.25rem; }
+.rules-rate-value { font-size: 1.5rem; font-weight: 700; color: var(--gb-screen-light); }
+.rules-special p, .rules-beverages p, .rules-notes p { font-size: 0.8rem; color: var(--gb-text-dim); line-height: 1.5; }
+.counter-special-hint { font-size: 0.7rem; color: var(--gb-text-dim); font-style: italic; font-family: 'Press Start 2P', monospace; }
+
+/* ===== DEBUG PANEL (dev only) ===== */
+.gb-debug {
+  margin: 0.5rem var(--screen-pad);
+  padding: 0.5rem;
+  background: #000;
+  border-radius: 6px;
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--gb-screen-light);
+  max-height: 100px;
+  overflow: auto;
+  white-space: pre-wrap;
+  flex-shrink: 0;
+}
+
+/* ===== iOS SAFE AREAS ===== */
 @supports (padding: max(0px)) {
-  .header {
-    padding-top: max(1rem, env(safe-area-inset-top));
+  .gb-label {
+    padding-top: max(clamp(6px, 1.5vh, 12px), env(safe-area-inset-top));
   }
-  .footer {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  .gb-footer {
+    padding-bottom: max(clamp(4px, 1vh, 8px), env(safe-area-inset-bottom));
   }
+}
+
+/* ===== RESPONSIVE: very small phones (SE, 5s) ===== */
+@media (max-height: 600px) {
+  .gb-label { padding: 4px var(--screen-pad); }
+  .gb-label h1 { font-size: 14px; }
+  .gb-screen-bezel { margin: 4px; padding: 4px; }
+  .gb-controls { gap: 6px; padding: 6px var(--screen-pad); }
+  .gb-dpad-btn { width: 40px; height: 40px; }
+  .gb-scan-btn { width: 48px; height: 48px; }
+  .gb-action-btn { padding: 6px 12px; }
+  .gb-footer { display: none; }
+}
+
+/* ===== RESPONSIVE: tall phones (Pro Max, Ultra) ===== */
+@media (min-height: 800px) {
+  .gb-controls { gap: 16px; padding: 16px var(--screen-pad); }
+  .gb-dpad-btn { width: 56px; height: 56px; }
+  .gb-scan-btn { width: 72px; height: 72px; }
+}
+
+/* ===== RESPONSIVE: wider screens ===== */
+@media (min-width: 400px) {
+  .gb-action-btn { padding: 12px 28px; }
+  .gb-dpad-row { gap: 28px; }
 }

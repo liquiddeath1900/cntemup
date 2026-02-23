@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Camera, isInCountZone } from './components/Camera'
 import { Counter } from './components/Counter'
 import { Auth } from './components/Auth'
@@ -8,6 +8,7 @@ import { useCamera } from './hooks/useCamera'
 import { useObjectDetection, DETECTION_CONFIG } from './hooks/useObjectDetection'
 import { useAuth } from './hooks/useAuth'
 import { useDepositRules } from './hooks/useDepositRules'
+import { createTracker } from './utils/tracker'
 import { supabase, supabaseEnabled } from './lib/supabase'
 import './App.css'
 
@@ -28,7 +29,6 @@ async function saveSession(userId, count, depositValue, stateCode) {
     const { error } = await supabase.from('counting_sessions').insert(session)
     if (error) throw error
   } else {
-    // localStorage fallback
     const sessions = JSON.parse(localStorage.getItem(SESSIONS_KEY) || '[]')
     sessions.push(session)
     localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions))
@@ -36,73 +36,83 @@ async function saveSession(userId, count, depositValue, stateCode) {
   return session
 }
 
-// Main counter/scanner page
+// Main counter/scanner page — Game Boy Color UI
 function CounterPage() {
   const [count, setCount] = useState(0)
   const [sessionCount, setSessionCount] = useState(0)
   const [detections, setDetections] = useState([])
   const [isRunning, setIsRunning] = useState(false)
   const [savingSession, setSavingSession] = useState(false)
+  const [topDetection, setTopDetection] = useState(null) // best detection for badge
 
   const { user, profile } = useAuth()
   const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code)
   const { videoRef, isStreaming, videoReady, error: cameraError, debugLog, devices, startCamera, stopCamera, switchCamera, handleTapToPlay } = useCamera()
-  const { model, isLoading, error: modelError, loadModel, startDetection, stopDetection } = useObjectDetection()
+  const { model, isLoading, loadProgress, error: modelError, loadModel, startDetection, stopDetection } = useObjectDetection()
 
-  // Detection history for debounce — track last N frames
-  const frameHistoryRef = useRef([])
-  const prevStableCountRef = useRef(0)
+  // Object tracker — persists across frames, prevents double-counting
+  const trackerRef = useRef(createTracker({
+    iouThreshold: 0.3,
+    maxMissedFrames: 8,
+    minFramesToCount: DETECTION_CONFIG.requiredConsecutiveFrames,
+    maxCentroidDist: 80,
+  }))
 
-  // Debounced detection handler — only count after 3 consecutive frames
+  // Pre-load model on mount (not on first "Start" click)
+  useEffect(() => {
+    if (!model && !isLoading) {
+      loadModel()
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Detection handler using tracker
   const handleDetection = useCallback((objects) => {
     setDetections(objects)
 
     const video = videoRef.current
     if (!video) return
+
+    // Filter to count zone
     const inZone = objects.filter(o =>
       isInCountZone(o.bbox, video.videoWidth, video.videoHeight)
     )
-    const currentCount = inZone.length
 
-    const history = frameHistoryRef.current
-    history.push(currentCount)
-    if (history.length > DETECTION_CONFIG.requiredConsecutiveFrames) {
-      history.shift()
+    // Update tracker with in-zone detections
+    const { newlyCounted } = trackerRef.current.update(inZone)
+
+    if (newlyCounted > 0) {
+      setCount(prev => prev + newlyCounted)
+      setSessionCount(prev => prev + newlyCounted)
     }
 
-    if (history.length === DETECTION_CONFIG.requiredConsecutiveFrames) {
-      const allSame = history.every(c => c === currentCount)
-      if (allSame && currentCount > prevStableCountRef.current) {
-        const newBottles = currentCount - prevStableCountRef.current
-        setCount(prev => prev + newBottles)
-        setSessionCount(prev => prev + newBottles)
-        prevStableCountRef.current = currentCount
-      } else if (allSame && currentCount < prevStableCountRef.current) {
-        prevStableCountRef.current = currentCount
-      }
+    // Show best detection for confidence badge
+    if (objects.length > 0) {
+      const best = objects.reduce((a, b) => a.score > b.score ? a : b)
+      setTopDetection(best)
+    } else {
+      setTopDetection(null)
     }
   }, [videoRef])
 
-  const handleManualCount = () => {
+  const handleManualAdd = () => {
     setCount(prev => prev + 1)
     setSessionCount(prev => prev + 1)
   }
 
-  const handleStart = async () => {
-    setIsRunning(true)
-    frameHistoryRef.current = []
-    prevStableCountRef.current = 0
-
-    let activeModel = model
-    if (!activeModel) {
-      activeModel = await loadModel()
+  const handleManualSub = () => {
+    if (count > 0) {
+      setCount(prev => prev - 1)
+      setSessionCount(prev => Math.max(0, prev - 1))
     }
-
-    await startCamera()
-    // Detection start is now gated by the videoReady useEffect below
   }
 
-  // Start detection only when video has real dimensions — prevents 0x0 canvas bug
+  const handleStart = async () => {
+    setIsRunning(true)
+    trackerRef.current.reset()
+    await startCamera()
+  }
+
+  // Start detection when video is ready
   useEffect(() => {
     if (isRunning && videoReady && model && videoRef.current) {
       startDetection(videoRef.current, handleDetection)
@@ -114,21 +124,19 @@ function CounterPage() {
     stopDetection()
     stopCamera()
     setDetections([])
-    frameHistoryRef.current = []
-    prevStableCountRef.current = 0
+    setTopDetection(null)
+    trackerRef.current.reset()
   }
 
   const handleReset = () => {
     setCount(0)
-    frameHistoryRef.current = []
-    prevStableCountRef.current = 0
+    trackerRef.current.reset()
   }
 
   const handleClearSession = () => {
     setCount(0)
     setSessionCount(0)
-    frameHistoryRef.current = []
-    prevStableCountRef.current = 0
+    trackerRef.current.reset()
   }
 
   const handleSaveSession = async () => {
@@ -152,132 +160,136 @@ function CounterPage() {
     }
   }, [stopDetection, stopCamera])
 
-  // Don't show tap_to_play as an error — it's handled by Camera overlay
   const error = (cameraError && cameraError !== 'tap_to_play') ? cameraError : modelError
+  const hasDeposit = profile?.state_code
 
   return (
     <div className="app">
-      <header className="header">
-        <div className="header-row">
+      {/* Game Boy label/header */}
+      <div className="gb-label">
+        <div className="gb-label-row">
           <h1>CNTEM'UP</h1>
-          <a href="/settings" className="settings-link">Settings</a>
+          <a href="/settings" className="settings-link">SET</a>
         </div>
         <p>Bottle & Can Counter</p>
-      </header>
+      </div>
 
-      <main className="main">
-        <Camera
-          videoRef={videoRef}
-          isStreaming={isStreaming}
-          videoReady={videoReady}
-          detections={detections}
-          error={cameraError}
-          devices={devices}
-          onTapToPlay={handleTapToPlay}
-          onSwitchCamera={switchCamera}
-        />
+      {/* LCD Screen bezel */}
+      <div className="gb-screen-bezel">
+        <div className="gb-screen">
+          {/* Camera viewfinder */}
+          <Camera
+            videoRef={videoRef}
+            isStreaming={isStreaming}
+            videoReady={videoReady}
+            detections={detections}
+            error={cameraError}
+            devices={devices}
+            onTapToPlay={handleTapToPlay}
+            onSwitchCamera={switchCamera}
+          />
 
-        <Counter
-          count={count}
-          sessionCount={sessionCount}
-          isDetecting={isRunning && isStreaming}
-          depositRate={depositRate}
-          stateCode={profile?.state_code}
-          calculateDeposit={calculateDeposit}
-          rules={rules}
-        />
+          {/* LCD count display */}
+          <Counter
+            count={count}
+            sessionCount={sessionCount}
+            isDetecting={isRunning && isStreaming}
+            depositRate={depositRate}
+            stateCode={profile?.state_code}
+            calculateDeposit={calculateDeposit}
+            rules={rules}
+            topDetection={topDetection}
+          />
 
-        {error && (
-          <div className="error">{error}</div>
-        )}
+          {/* Model loading progress */}
+          {isLoading && (
+            <div className="gb-loading">
+              <span className="gb-loading-text">LOADING AI... {loadProgress}%</span>
+              <div className="gb-loading-bar">
+                <div className="gb-loading-fill" style={{ width: `${loadProgress}%` }} />
+              </div>
+            </div>
+          )}
 
-        {isLoading && (
-          <div className="loading">Loading AI model... this may take a few seconds</div>
-        )}
+          {error && <div className="gb-error">{error}</div>}
+        </div>
+      </div>
 
-        <div className="controls">
+      {/* Controls — D-pad + action buttons */}
+      <div className="gb-controls">
+        {/* D-pad row: [-] [SCAN/STOP] [+] */}
+        <div className="gb-dpad-row">
+          <button className="gb-dpad-btn gb-dpad-minus" onClick={handleManualSub}>−</button>
+
           {!isRunning ? (
             <button
-              className="btn btn-primary"
+              className="gb-dpad-btn gb-scan-btn"
               onClick={handleStart}
               disabled={isLoading}
             >
-              {isLoading ? 'Loading...' : 'Start Counting'}
+              {isLoading ? '...' : 'SCAN'}
             </button>
           ) : (
-            <>
-              <button className="btn btn-danger" onClick={handleStop}>
-                Stop
-              </button>
-              <button className="btn btn-manual" onClick={handleManualCount}>
-                + Manual Count
-              </button>
-            </>
+            <button className="gb-dpad-btn gb-scan-btn gb-stop-btn" onClick={handleStop}>
+              STOP
+            </button>
           )}
 
-          <button className="btn btn-secondary" onClick={handleReset}>
-            Reset Count
-          </button>
+          <button className="gb-dpad-btn gb-dpad-plus" onClick={handleManualAdd}>+</button>
+        </div>
 
+        {/* Action buttons */}
+        <div className="gb-action-row">
+          <button className="gb-action-btn gb-start-btn" onClick={isRunning ? handleStop : handleStart} disabled={isLoading}>
+            {isRunning ? 'STOP' : 'START'}
+          </button>
+          <button className="gb-action-btn gb-reset-btn" onClick={handleReset}>RESET</button>
+        </div>
+
+        {/* Save / Clear session */}
+        <div className="gb-action-row">
           {sessionCount > 0 && (
             <button
-              className="btn btn-primary"
+              className="gb-action-btn gb-save-btn"
               onClick={handleSaveSession}
               disabled={savingSession}
             >
-              {savingSession ? 'Saving...' : 'Save Session'}
+              {savingSession ? 'SAVING' : 'SAVE'}
             </button>
           )}
-
-          <button className="btn btn-ghost" onClick={handleClearSession}>
-            Clear Session
-          </button>
+          <button className="gb-clear-btn" onClick={handleClearSession}>CLEAR</button>
         </div>
-      </main>
+      </div>
 
-      {/* Debug panel — only visible in dev mode */}
+      {/* Debug panel — dev only */}
       {import.meta.env.DEV && debugLog.length > 0 && (
-        <div style={{
-          margin: '1rem',
-          padding: '0.75rem',
-          background: '#000',
-          borderRadius: '8px',
-          fontSize: '11px',
-          fontFamily: 'monospace',
-          color: '#10b981',
-          maxHeight: '150px',
-          overflow: 'auto',
-          whiteSpace: 'pre-wrap'
-        }}>
-          <strong>Camera Debug:</strong>
+        <div className="gb-debug">
+          <strong>Debug:</strong>
           {debugLog.map((line, i) => (
-            <div key={i} style={{ color: line.includes('ERROR') || line.includes('FATAL') ? '#ef4444' : '#10b981' }}>
+            <div key={i} style={{ color: line.includes('ERROR') ? '#ef4444' : undefined }}>
               {line}
             </div>
           ))}
         </div>
       )}
 
-      <footer className="footer">
-        <p>Point camera at bottles & cans</p>
+      <footer className="gb-footer">
+        <p>Point at bottles & cans</p>
       </footer>
     </div>
   )
 }
 
-// Root app — routing (no auth gate, counter-first)
+// Root app — routing
 function App() {
   const { user, loading, setupLocal } = useAuth()
   const didSetup = useRef(false)
 
-  // Auto-setup local profile synchronously during render (not in useEffect)
-  // This prevents the loading screen race condition
   if (!loading && !user && !didSetup.current) {
     didSetup.current = true
     setupLocal('NY', 'Counter')
   }
 
-  // Only gate on auth initialization, not on user existence
   if (loading) {
     return (
       <div className="app">

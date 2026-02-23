@@ -4,17 +4,18 @@ import '@tensorflow/tfjs'
 
 // Detection configuration — tune these values for accuracy vs performance
 export const DETECTION_CONFIG = {
-  // Bottle + cup (cup is closest COCO class to "can")
-  targetClasses: ['bottle', 'cup'],
-  // Per-class confidence thresholds — cups need higher to reduce false positives
+  // Bottle + cup + bowl (some cans get classified as bowls by COCO-SSD)
+  targetClasses: ['bottle', 'cup', 'bowl'],
+  // Per-class confidence thresholds — higher = fewer false positives
   confidenceThresholds: {
-    bottle: 0.35,
-    cup: 0.5,
+    bottle: 0.55,
+    cup: 0.65,
+    bowl: 0.7,
   },
   // Default fallback threshold
-  confidenceThreshold: 0.35,
+  confidenceThreshold: 0.65,
   // Higher FPS = smoother tracking, costs more battery
-  detectionFps: 15,
+  detectionFps: 12,
   // Frames an object must persist before counting (prevents flicker)
   requiredConsecutiveFrames: 3,
 }
@@ -23,6 +24,7 @@ export const DETECTION_CONFIG = {
 export const CLASS_DISPLAY_NAMES = {
   bottle: 'bottle',
   cup: 'can',
+  bowl: 'can',
 }
 
 // Model configuration — structured for future YOLOv8 swap
@@ -47,21 +49,30 @@ export const MODEL_CONFIG = {
 export function useObjectDetection() {
   const [model, setModel] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [loadProgress, setLoadProgress] = useState(0) // 0-100
   const [error, setError] = useState(null)
   const detectionRef = useRef(null)
   const modelConfigRef = useRef('cocoSsd')
 
-  // Load detection model
+  // Load detection model with simulated progress
   const loadModel = useCallback(async (modelKey = 'cocoSsd') => {
     try {
       setIsLoading(true)
+      setLoadProgress(10)
       setError(null)
       modelConfigRef.current = modelKey
 
       const config = MODEL_CONFIG[modelKey]
       console.log(`Loading ${config.name}...`)
 
+      // Simulate progress since COCO-SSD doesn't emit progress events
+      const progressTimer = setInterval(() => {
+        setLoadProgress(prev => Math.min(prev + 15, 85))
+      }, 400)
+
       const loadedModel = await config.loader()
+      clearInterval(progressTimer)
+      setLoadProgress(100)
 
       setModel(loadedModel)
       console.log('Model loaded!')
@@ -71,6 +82,7 @@ export function useObjectDetection() {
       console.error('Model load error:', err)
       setError('Failed to load detection model')
       setIsLoading(false)
+      setLoadProgress(0)
       return null
     }
   }, [])
@@ -136,6 +148,7 @@ export function useObjectDetection() {
   return {
     model,
     isLoading,
+    loadProgress,
     error,
     loadModel,
     detectObjects,
