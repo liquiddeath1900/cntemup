@@ -1,0 +1,300 @@
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { supabase, supabaseEnabled } from '../lib/supabase'
+import { trackVisit } from '../lib/tracking'
+
+const WAITLIST_KEY = 'cntemup_waitlist'
+const USER_KEY = 'cntemup_user'
+
+// Check if user already signed up
+export function getLoggedInUser() {
+  try {
+    return JSON.parse(localStorage.getItem(USER_KEY))
+  } catch {
+    return null
+  }
+}
+
+// Save signup locally or to Supabase
+async function saveSignup({ name, email, zipcode, city, region, country }) {
+  if (supabaseEnabled && supabase) {
+    const { error } = await supabase.from('waitlist').insert({
+      name: name || null,
+      email,
+      zipcode: zipcode || null,
+      city: city || null,
+      region: region || null,
+      country: country || null,
+      source: 'landing',
+    })
+    if (error && !error.message.includes('duplicate')) throw error
+  } else {
+    const list = JSON.parse(localStorage.getItem(WAITLIST_KEY) || '[]')
+    list.push({ name, email, zipcode, city, region, country, created_at: new Date().toISOString() })
+    localStorage.setItem(WAITLIST_KEY, JSON.stringify(list))
+  }
+
+  const user = { name, email, zipcode, loggedIn: true, created_at: new Date().toISOString() }
+  localStorage.setItem(USER_KEY, JSON.stringify(user))
+  return user
+}
+
+export function LandingPage() {
+  const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [name, setName] = useState('')
+  const [zipcode, setZipcode] = useState('')
+  const [status, setStatus] = useState(null)
+  const [showForm, setShowForm] = useState(false)
+  const geoRef = useRef({})
+  const formRef = useRef(null)
+
+  // If already logged in, go straight to app
+  useEffect(() => {
+    const user = getLoggedInUser()
+    if (user?.loggedIn) {
+      navigate('/app')
+    }
+  }, [navigate])
+
+  // Track visitor on page load
+  useEffect(() => {
+    trackVisit('/').then(({ geo }) => {
+      geoRef.current = geo || {}
+    })
+  }, [])
+
+  // Scroll to form when it appears
+  useEffect(() => {
+    if (showForm && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [showForm])
+
+  const handleGetStarted = () => {
+    setShowForm(true)
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!email) return
+    setStatus('saving')
+    try {
+      const geo = geoRef.current
+      await saveSignup({ name, email, zipcode, city: geo.city, region: geo.region, country: geo.country })
+      setStatus('done')
+      setTimeout(() => navigate('/app'), 1200)
+    } catch (err) {
+      console.error('Signup error:', err)
+      setStatus('error')
+    }
+  }
+
+  return (
+    <div className="landing">
+      <div className="landing-scanlines" />
+
+      {/* ===== HERO — Title + tagline ===== */}
+      <section className="landing-hero landing-hero-compact">
+        <div className="landing-console">
+          <div className="landing-power">
+            <span className="landing-power-dot" />
+            <span className="landing-power-label">POWER</span>
+          </div>
+
+          <h1 className="landing-title">CNTEM'UP</h1>
+          <p className="landing-subtitle">BOTTLE & CAN COUNTER</p>
+        </div>
+      </section>
+
+      {/* ===== HOW IT WORKS — Main content ===== */}
+      <section className="landing-howto">
+        <h2 className="landing-section-title">— HOW TO PLAY —</h2>
+
+        <div className="setup-card">
+          <div className="setup-card-header">
+            <span className="setup-card-num">STEP 1</span>
+            <span className="setup-card-title">PROP YOUR PHONE</span>
+          </div>
+          <div className="setup-diagram">
+            <pre className="setup-ascii">{`
+     ┌─────────┐
+     │ ┌─────┐ │
+     │ │ CAM │ │  ← Phone propped up
+     │ │ ~~~ │ │     facing the table
+     │ │ 047 │ │
+     │ └─────┘ │
+     └────┬────┘
+          │╲
+     ═════╧══════  ← Table / surface
+            `}</pre>
+          </div>
+          <p className="setup-tip">Lean your phone against anything — a book, a mug, a wall. Camera facing the surface where items will pass.</p>
+        </div>
+
+        <div className="setup-card">
+          <div className="setup-card-header">
+            <span className="setup-card-num">STEP 2</span>
+            <span className="setup-card-title">HIT START</span>
+          </div>
+          <div className="setup-diagram">
+            <div className="setup-phone-screen">
+              <div className="setup-phone-cam">
+                <div className="setup-tripwire-demo">
+                  <span className="setup-tw-label">TRIPWIRE</span>
+                </div>
+              </div>
+              <div className="setup-phone-count">
+                <span>COUNT</span>
+                <span className="setup-phone-num">000</span>
+              </div>
+            </div>
+          </div>
+          <p className="setup-tip">A red line appears on your camera feed. That's the tripwire. Anything that crosses it gets counted.</p>
+        </div>
+
+        <div className="setup-card setup-card-highlight">
+          <div className="setup-card-header">
+            <span className="setup-card-num">STEP 3</span>
+            <span className="setup-card-title">TOSS 'EM</span>
+          </div>
+          <div className="setup-diagram">
+            <div className="setup-conveyor">
+              <div className="setup-bottle setup-bottle-1">🍾</div>
+              <div className="setup-bottle setup-bottle-2">🥫</div>
+              <div className="setup-bottle setup-bottle-3">🍺</div>
+              <div className="setup-conveyor-line" />
+              <div className="setup-conveyor-arrow">→ → →</div>
+              <div className="setup-phone-mini">
+                <div className="setup-phone-mini-screen">
+                  <div className="setup-mini-tw" />
+                  <span>+1</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p className="setup-tip">Slide, roll, or toss bottles & cans across the camera view. Each one that crosses the line = <strong>+1</strong></p>
+          <div className="setup-methods">
+            <div className="setup-method">
+              <span className="setup-method-icon">👆</span>
+              <span>Slide across table</span>
+            </div>
+            <div className="setup-method">
+              <span className="setup-method-icon">📐</span>
+              <span>Use a ramp / chute</span>
+            </div>
+            <div className="setup-method">
+              <span className="setup-method-icon">🤲</span>
+              <span>Hand-pass one by one</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="setup-card">
+          <div className="setup-card-header">
+            <span className="setup-card-num">STEP 4</span>
+            <span className="setup-card-title">KNOW YOUR MONEY</span>
+          </div>
+          <div className="setup-diagram">
+            <div className="setup-payout">
+              <div className="setup-payout-row">
+                <span className="setup-payout-label">COUNTED</span>
+                <span className="setup-payout-value">047</span>
+              </div>
+              <div className="setup-payout-row">
+                <span className="setup-payout-label">VALUE</span>
+                <span className="setup-payout-value setup-payout-money">$2.35</span>
+              </div>
+              <div className="setup-payout-row">
+                <span className="setup-payout-label">STATE</span>
+                <span className="setup-payout-value">NY @ 5¢</span>
+              </div>
+            </div>
+          </div>
+          <p className="setup-tip">See your deposit value in real time. Save your session. Take your bags to the redemption center and collect.</p>
+        </div>
+
+        <div className="setup-protips">
+          <h3 className="setup-protips-title">PRO TIPS</h3>
+          <div className="setup-protip">
+            <span>💡</span> Good lighting = better detection. Avoid shadows across the line.
+          </div>
+          <div className="setup-protip">
+            <span>📏</span> Keep items 6-18 inches from camera for best results.
+          </div>
+          <div className="setup-protip">
+            <span>±</span> Miscounted? Use +/− buttons to fix it manually.
+          </div>
+          <div className="setup-protip">
+            <span>☝️</span> Drag the tripwire line up or down to reposition it.
+          </div>
+        </div>
+      </section>
+
+      {/* ===== SIGNUP — Gate to counter ===== */}
+      <section className="landing-signup-section" ref={formRef}>
+        {status === 'done' ? (
+          <div className="landing-success">
+            <div className="landing-success-icon">✓</div>
+            <h2>PLAYER REGISTERED!</h2>
+            <p>Loading counter...</p>
+          </div>
+        ) : !showForm ? (
+          <button className="landing-start-btn landing-start-btn-big" onClick={handleGetStarted}>
+            ▶ GET STARTED
+          </button>
+        ) : (
+          <form className="landing-form" onSubmit={handleSubmit}>
+            <h2 className="landing-form-title">JOIN THE GAME</h2>
+
+            <input
+              className="landing-input"
+              type="text"
+              placeholder="NAME (optional)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="name"
+            />
+            <input
+              className="landing-input"
+              type="email"
+              placeholder="EMAIL *"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+              autoFocus
+            />
+            <input
+              className="landing-input"
+              type="text"
+              placeholder="ZIP CODE (optional)"
+              value={zipcode}
+              onChange={(e) => setZipcode(e.target.value)}
+              maxLength={5}
+              inputMode="numeric"
+              autoComplete="postal-code"
+            />
+
+            <button
+              className="landing-start-btn"
+              type="submit"
+              disabled={status === 'saving' || !email}
+            >
+              {status === 'saving' ? 'SAVING...' : '▶ START COUNTING'}
+            </button>
+
+            {status === 'error' && (
+              <p className="landing-error">Something went wrong. Try again.</p>
+            )}
+          </form>
+        )}
+      </section>
+
+      <footer className="landing-footer">
+        <p>CNTEM'UP © 2026</p>
+        <p>BUILT IN NYC</p>
+      </footer>
+    </div>
+  )
+}

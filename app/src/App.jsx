@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { LandingPage } from './components/LandingPage'
 import { Counter } from './components/Counter'
 import { Auth } from './components/Auth'
 import { Settings } from './components/Settings'
@@ -305,7 +306,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<CounterPage />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/app" element={<CounterPage />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/login" element={<Auth />} />
       </Routes>
