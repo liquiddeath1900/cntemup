@@ -18,21 +18,26 @@ export function getLoggedInUser() {
 
 // Save signup locally or to Supabase
 async function saveSignup({ name, email, zipcode, city, region, country }) {
+  // Always save locally first as backup
+  const list = JSON.parse(localStorage.getItem(WAITLIST_KEY) || '[]')
+  list.push({ name, email, zipcode, city, region, country, created_at: new Date().toISOString() })
+  localStorage.setItem(WAITLIST_KEY, JSON.stringify(list))
+
+  // Also save to Supabase if available (non-blocking)
   if (supabaseEnabled && supabase) {
-    const { error } = await supabase.from('waitlist').insert({
-      name: name || null,
-      email,
-      zipcode: zipcode || null,
-      city: city || null,
-      region: region || null,
-      country: country || null,
-      source: 'landing',
-    })
-    if (error && !error.message.includes('duplicate')) throw error
-  } else {
-    const list = JSON.parse(localStorage.getItem(WAITLIST_KEY) || '[]')
-    list.push({ name, email, zipcode, city, region, country, created_at: new Date().toISOString() })
-    localStorage.setItem(WAITLIST_KEY, JSON.stringify(list))
+    try {
+      await supabase.from('waitlist').insert({
+        name: name || null,
+        email,
+        zipcode: zipcode || null,
+        city: city || null,
+        region: region || null,
+        country: country || null,
+        source: 'landing',
+      })
+    } catch (err) {
+      console.warn('[Waitlist] Supabase insert failed, saved locally', err)
+    }
   }
 
   const user = { name, email, zipcode, loggedIn: true, created_at: new Date().toISOString() }

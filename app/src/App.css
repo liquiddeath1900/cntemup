@@ -21,16 +21,16 @@
   --gb-btn-dpad: #2c2137;
   --gb-accent: #10b981;
   --gb-text: #9bbc0f;
-  --gb-text-dim: #306230;
+  --gb-text-dim: #5a8a3a;
   --gb-danger: #ef4444;
   --gb-warning: #f59e0b;
 
   /* Responsive sizing */
   --screen-pad: clamp(8px, 2vw, 16px);
-  --font-xs: clamp(8px, 2vw, 10px);
-  --font-sm: clamp(10px, 2.5vw, 12px);
-  --font-md: clamp(12px, 3vw, 14px);
-  --font-lg: clamp(16px, 4vw, 20px);
+  --font-xs: clamp(10px, 2.5vw, 12px);
+  --font-sm: clamp(12px, 3vw, 14px);
+  --font-md: clamp(14px, 3.5vw, 16px);
+  --font-lg: clamp(18px, 4.5vw, 22px);
   --font-xl: clamp(24px, 7vw, 36px);
   --font-xxl: clamp(32px, 9vw, 48px);
 }
@@ -1315,7 +1315,7 @@ body {
   font-family: 'Press Start 2P', monospace;
   font-size: var(--font-xs);
   color: var(--gb-text-dim);
-  line-height: 1.8;
+  line-height: 2;
   padding: 0 14px 14px;
 }
 
