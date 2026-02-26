@@ -81,13 +81,14 @@ function CounterPage() {
   }
 
   const handleStart = async () => {
-    // Play boot chime immediately on tap (must be in user gesture for iOS)
-    playBoot()
-    // Small delay so sound isn't killed by camera permission prompt
+    // Play boot chime on tap — call playCount first to unlock iOS audio context
+    playCount()
+    setTimeout(() => playBoot(), 150)
+    // Delay camera start so sound plays before permission prompt
     setTimeout(async () => {
       setIsRunning(true)
       await startCamera()
-    }, 600)
+    }, 700)
   }
 
   const handleStop = () => {
