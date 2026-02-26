@@ -139,8 +139,17 @@ export function useAuth() {
       return
     }
 
+    // Timeout — if Supabase doesn't respond in 3s, fall back to local
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('[Auth] Supabase timeout, falling back to local')
+        initLocal()
+      }
+    }, 3000)
+
     // Supabase auth listener
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(timeout)
       const currentUser = session?.user ?? null
       setUser(currentUser)
       if (currentUser) {
@@ -148,6 +157,9 @@ export function useAuth() {
           .then(({ data }) => setProfile(data))
       }
       setLoading(false)
+    }).catch(() => {
+      clearTimeout(timeout)
+      initLocal()
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
