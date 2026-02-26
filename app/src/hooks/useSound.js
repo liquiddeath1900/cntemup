@@ -3,38 +3,33 @@ import { useState, useRef, useCallback } from 'react'
 // Retro Game Boy-style sound effects using Web Audio API
 // No external files needed — generates beeps procedurally
 
-let audioCtx = null
-
-function getAudioCtx() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-  }
-  // Resume if suspended (iOS requires user gesture)
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume()
-  }
-  return audioCtx
+// iOS Safari requires AudioContext to be created AND resumed inside a user gesture.
+// We create a fresh context each time to guarantee playback on mobile.
+function createAudioCtx() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)()
+  if (ctx.state === 'suspended') ctx.resume()
+  return ctx
 }
 
 // Play a retro beep — frequency + duration + waveform
-function playTone(freq, duration = 0.08, type = 'square', volume = 0.3) {
+function playTone(freq, duration = 0.08, type = 'square', volume = 0.3, ctx = null) {
   try {
-    const ctx = getAudioCtx()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
+    const audioCtx = ctx || createAudioCtx()
+    const osc = audioCtx.createOscillator()
+    const gain = audioCtx.createGain()
 
     osc.type = type // 'square' = classic Game Boy sound
-    osc.frequency.setValueAtTime(freq, ctx.currentTime)
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime)
 
     // Quick attack, quick release for that 8-bit feel
-    gain.gain.setValueAtTime(0, ctx.currentTime)
-    gain.gain.linearRampToValueAtTime(volume, ctx.currentTime + 0.005)
-    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + duration)
+    gain.gain.setValueAtTime(0, audioCtx.currentTime)
+    gain.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + 0.005)
+    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration)
 
     osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.start(ctx.currentTime)
-    osc.stop(ctx.currentTime + duration + 0.01)
+    gain.connect(audioCtx.destination)
+    osc.start(audioCtx.currentTime)
+    osc.stop(audioCtx.currentTime + duration + 0.01)
   } catch {
     // Audio not supported or blocked — fail silently
   }
@@ -42,9 +37,10 @@ function playTone(freq, duration = 0.08, type = 'square', volume = 0.3) {
 
 // Count beep — short high chirp (like coin pickup)
 export function playCountBeep() {
-  playTone(880, 0.06, 'square', 0.25)    // A5
+  const ctx = createAudioCtx()
+  playTone(880, 0.06, 'square', 0.25, ctx)    // A5
   setTimeout(() => {
-    playTone(1175, 0.08, 'square', 0.2)  // D6 (quick ascending double beep)
+    playTone(1175, 0.08, 'square', 0.2, ctx)  // D6 (quick ascending double beep)
   }, 60)
 }
 
@@ -63,7 +59,7 @@ export function playSuccessBeep() {
 // Game Boy boot chime — the classic "ba-ding!" power-on sound
 export function playBootChime() {
   try {
-    const ctx = getAudioCtx()
+    const ctx = createAudioCtx()
     const now = ctx.currentTime
 
     // First note — low ping

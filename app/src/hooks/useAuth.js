@@ -78,7 +78,8 @@ export function useAuth() {
     if (supabaseEnabled && supabase) {
       await supabase.auth.signOut()
     }
-    localStorage.removeItem(STORAGE_KEY)
+    // Keep profile in localStorage so they don't have to re-setup
+    // Just clear the active session — profile stays for next visit
     setUser(null)
     setProfile(null)
   }, [])
