@@ -1,17 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { Camera, isInCountZone } from './components/Camera'
 import { Counter } from './components/Counter'
-import { ModeSelector } from './components/ModeSelector'
-import { TallyMode } from './components/TallyMode'
 import { Auth } from './components/Auth'
 import { Settings } from './components/Settings'
 import { useCamera } from './hooks/useCamera'
-import { useDetection } from './hooks/useDetection'
-import { DETECTION_CONFIG } from './hooks/useObjectDetection'
+import { useTripwire } from './hooks/useTripwire'
 import { useAuth } from './hooks/useAuth'
 import { useDepositRules } from './hooks/useDepositRules'
-import { createTracker } from './utils/tracker'
 import { supabase, supabaseEnabled } from './lib/supabase'
 import './App.css'
 
@@ -39,64 +34,34 @@ async function saveSession(userId, count, depositValue, stateCode) {
   return session
 }
 
-// Main counter/scanner page — Game Boy Color UI
+// Main counter page — camera + tripwire counting
 function CounterPage() {
   const [count, setCount] = useState(0)
   const [sessionCount, setSessionCount] = useState(0)
-  const [detections, setDetections] = useState([])
   const [isRunning, setIsRunning] = useState(false)
   const [savingSession, setSavingSession] = useState(false)
-  const [topDetection, setTopDetection] = useState(null) // best detection for badge
-  const [mode, setMode] = useState('scan') // 'scan' | 'tally'
+  const [isDragging, setIsDragging] = useState(false)
+  const cameraContainerRef = useRef(null)
 
   const { user, profile } = useAuth()
   const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code)
   const { videoRef, isStreaming, videoReady, error: cameraError, debugLog, devices, startCamera, stopCamera, switchCamera, handleTapToPlay } = useCamera()
-  const { model, isLoading, loadProgress, error: modelError, loadModel, startDetection, stopDetection, modelType } = useDetection()
+  const { startTripwire, stopTripwire, tripwireY, setTripwireY, isTriggered, setOnTrigger } = useTripwire()
 
-  // Object tracker — persists across frames, prevents double-counting
-  const trackerRef = useRef(createTracker({
-    iouThreshold: 0.3,
-    maxMissedFrames: 8,
-    minFramesToCount: DETECTION_CONFIG.requiredConsecutiveFrames,
-    maxCentroidDist: 80,
-  }))
-
-  // Pre-load model on mount (not on first "Start" click)
+  // Wire tripwire trigger → increment count
   useEffect(() => {
-    if (!model && !isLoading) {
-      loadModel()
+    setOnTrigger(() => {
+      setCount(prev => prev + 1)
+      setSessionCount(prev => prev + 1)
+    })
+  }, [setCount, setSessionCount, setOnTrigger])
+
+  // Start tripwire when video is ready
+  useEffect(() => {
+    if (isRunning && videoReady && videoRef.current) {
+      startTripwire(videoRef.current)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Detection handler using tracker
-  const handleDetection = useCallback((objects) => {
-    setDetections(objects)
-
-    const video = videoRef.current
-    if (!video) return
-
-    // Filter to count zone
-    const inZone = objects.filter(o =>
-      isInCountZone(o.bbox, video.videoWidth, video.videoHeight)
-    )
-
-    // Update tracker with in-zone detections
-    const { newlyCounted } = trackerRef.current.update(inZone)
-
-    if (newlyCounted > 0) {
-      setCount(prev => prev + newlyCounted)
-      setSessionCount(prev => prev + newlyCounted)
-    }
-
-    // Show best detection for confidence badge
-    if (objects.length > 0) {
-      const best = objects.reduce((a, b) => a.score > b.score ? a : b)
-      setTopDetection(best)
-    } else {
-      setTopDetection(null)
-    }
-  }, [videoRef])
+  }, [isRunning, videoReady, videoRef, startTripwire])
 
   const handleManualAdd = () => {
     setCount(prev => prev + 1)
@@ -112,35 +77,22 @@ function CounterPage() {
 
   const handleStart = async () => {
     setIsRunning(true)
-    trackerRef.current.reset()
     await startCamera()
   }
 
-  // Start detection when video is ready
-  useEffect(() => {
-    if (isRunning && videoReady && model && videoRef.current) {
-      startDetection(videoRef.current, handleDetection)
-    }
-  }, [isRunning, videoReady, model, startDetection, handleDetection, videoRef])
-
   const handleStop = () => {
     setIsRunning(false)
-    stopDetection()
+    stopTripwire()
     stopCamera()
-    setDetections([])
-    setTopDetection(null)
-    trackerRef.current.reset()
   }
 
   const handleReset = () => {
     setCount(0)
-    trackerRef.current.reset()
   }
 
   const handleClearSession = () => {
     setCount(0)
     setSessionCount(0)
-    trackerRef.current.reset()
   }
 
   const handleSaveSession = async () => {
@@ -157,19 +109,52 @@ function CounterPage() {
     }
   }
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      stopDetection()
+      stopTripwire()
       stopCamera()
     }
-  }, [stopDetection, stopCamera])
+  }, [stopTripwire, stopCamera])
 
-  const error = (cameraError && cameraError !== 'tap_to_play') ? cameraError : modelError
-  const hasDeposit = profile?.state_code
+  // Drag tripwire line
+  const handleDragStart = useCallback((e) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }, [])
+
+  const handleDragMove = useCallback((e) => {
+    if (!isDragging || !cameraContainerRef.current) return
+    const rect = cameraContainerRef.current.getBoundingClientRect()
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY
+    const y = Math.max(0.1, Math.min(0.9, (clientY - rect.top) / rect.height))
+    setTripwireY(y)
+  }, [isDragging, setTripwireY])
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleDragMove)
+      window.addEventListener('mouseup', handleDragEnd)
+      window.addEventListener('touchmove', handleDragMove, { passive: false })
+      window.addEventListener('touchend', handleDragEnd)
+      return () => {
+        window.removeEventListener('mousemove', handleDragMove)
+        window.removeEventListener('mouseup', handleDragEnd)
+        window.removeEventListener('touchmove', handleDragMove)
+        window.removeEventListener('touchend', handleDragEnd)
+      }
+    }
+  }, [isDragging, handleDragMove, handleDragEnd])
+
+  const error = cameraError && cameraError !== 'tap_to_play' ? cameraError : null
 
   return (
     <div className="app">
-      {/* Game Boy label/header */}
+      {/* Header */}
       <div className="gb-label">
         <div className="gb-label-row">
           <h1>CNTEM'UP</h1>
@@ -178,143 +163,106 @@ function CounterPage() {
         <p>Bottle & Can Counter</p>
       </div>
 
-      {/* Mode toggle: SCAN | TALLY */}
-      <ModeSelector mode={mode} setMode={setMode} />
+      {/* Screen */}
+      <div className="gb-screen-bezel">
+        <div className="gb-screen">
+          {/* Camera + tripwire */}
+          <div className="camera-container" ref={cameraContainerRef}>
+            <video
+              ref={videoRef}
+              className="camera-video"
+              playsInline
+              muted
+              autoPlay
+            />
 
-      {/* ===== SCAN MODE (existing, untouched) ===== */}
-      {mode === 'scan' && (
-        <>
-          <div className="gb-screen-bezel">
-            <div className="gb-screen">
-              <Camera
-                videoRef={videoRef}
-                isStreaming={isStreaming}
-                videoReady={videoReady}
-                detections={detections}
-                error={cameraError}
-                devices={devices}
-                onTapToPlay={handleTapToPlay}
-                onSwitchCamera={switchCamera}
-              />
+            {/* Tripwire line — visible when camera is running */}
+            {isStreaming && (
+              <div
+                className={`tripwire-line ${isTriggered ? 'tripwire-trigger-flash' : ''}`}
+                style={{ top: `${tripwireY * 100}%` }}
+                onMouseDown={handleDragStart}
+                onTouchStart={handleDragStart}
+              >
+                <span className="tripwire-label">TRIPWIRE</span>
+                <span className="tripwire-handle" />
+              </div>
+            )}
 
-              <Counter
-                count={count}
-                sessionCount={sessionCount}
-                isDetecting={isRunning && isStreaming}
-                depositRate={depositRate}
-                stateCode={profile?.state_code}
-                calculateDeposit={calculateDeposit}
-                rules={rules}
-                topDetection={topDetection}
-              />
+            {/* Camera switch */}
+            {devices.length > 1 && isStreaming && (
+              <button className="camera-switch-btn" onClick={switchCamera}>↻</button>
+            )}
 
-              {isLoading && (
-                <div className="gb-loading">
-                  <span className="gb-loading-text">LOADING AI... {loadProgress}%</span>
-                  <div className="gb-loading-bar">
-                    <div className="gb-loading-fill" style={{ width: `${loadProgress}%` }} />
-                  </div>
-                </div>
-              )}
+            {/* Tap to play (iOS) */}
+            {cameraError === 'tap_to_play' && (
+              <div className="camera-tap-overlay" onClick={handleTapToPlay}>
+                <span>TAP TO START</span>
+              </div>
+            )}
 
-              {error && <div className="gb-error">{error}</div>}
-            </div>
+            {/* Placeholder when camera off */}
+            {!isStreaming && (
+              <div className="camera-placeholder">
+                <span>⎔</span>
+                <p>PRESS START</p>
+              </div>
+            )}
           </div>
 
-          <div className="gb-controls">
-            <div className="gb-dpad-row">
-              <button className="gb-dpad-btn gb-dpad-minus" onClick={handleManualSub}>−</button>
-              {!isRunning ? (
-                <button
-                  className="gb-dpad-btn gb-scan-btn"
-                  onClick={handleStart}
-                  disabled={isLoading}
-                >
-                  {isLoading ? '...' : 'START'}
-                </button>
-              ) : (
-                <button className="gb-dpad-btn gb-scan-btn gb-stop-btn" onClick={handleStop}>
-                  STOP
-                </button>
-              )}
-              <button className="gb-dpad-btn gb-dpad-plus" onClick={handleManualAdd}>+</button>
-            </div>
+          {/* Count display */}
+          <Counter
+            count={count}
+            sessionCount={sessionCount}
+            isDetecting={isRunning && isStreaming}
+            depositRate={depositRate}
+            stateCode={profile?.state_code}
+            calculateDeposit={calculateDeposit}
+            rules={rules}
+            topDetection={null}
+          />
 
-            <div className="gb-action-row">
-              <button className="gb-action-btn gb-start-btn" onClick={isRunning ? handleStop : handleStart} disabled={isLoading}>
-                {isRunning ? 'STOP' : 'PAUSE'}
-              </button>
-              <button className="gb-action-btn gb-reset-btn" onClick={handleReset}>RESET</button>
-            </div>
+          {error && <div className="gb-error">{error}</div>}
+        </div>
+      </div>
 
-            <div className="gb-action-row">
-              {sessionCount > 0 && (
-                <button
-                  className="gb-action-btn gb-save-btn"
-                  onClick={handleSaveSession}
-                  disabled={savingSession}
-                >
-                  {savingSession ? 'SAVING' : 'SAVE'}
-                </button>
-              )}
-              <button className="gb-clear-btn" onClick={handleClearSession}>CLEAR</button>
-            </div>
-          </div>
-        </>
-      )}
+      {/* Controls */}
+      <div className="gb-controls">
+        <div className="gb-dpad-row">
+          <button className="gb-dpad-btn gb-dpad-minus" onClick={handleManualSub}>−</button>
 
-      {/* ===== TALLY MODE (new) ===== */}
-      {mode === 'tally' && (
-        <>
-          <div className="gb-screen-bezel">
-            <div className="gb-screen">
-              <TallyMode
-                count={count}
-                setCount={setCount}
-                sessionCount={sessionCount}
-                setSessionCount={setSessionCount}
-              />
+          {!isRunning ? (
+            <button className="gb-dpad-btn gb-scan-btn" onClick={handleStart}>
+              START
+            </button>
+          ) : (
+            <button className="gb-dpad-btn gb-scan-btn gb-stop-btn" onClick={handleStop}>
+              STOP
+            </button>
+          )}
 
-              <Counter
-                count={count}
-                sessionCount={sessionCount}
-                isDetecting={false}
-                depositRate={depositRate}
-                stateCode={profile?.state_code}
-                calculateDeposit={calculateDeposit}
-                rules={rules}
-                topDetection={null}
-              />
-            </div>
-          </div>
+          <button className="gb-dpad-btn gb-dpad-plus" onClick={handleManualAdd}>+</button>
+        </div>
 
-          <div className="gb-controls">
-            <div className="gb-dpad-row">
-              <button className="gb-dpad-btn gb-dpad-minus" onClick={handleManualSub}>−</button>
-              <button className="gb-dpad-btn gb-dpad-plus" onClick={handleManualAdd}>+</button>
-            </div>
+        <div className="gb-action-row">
+          <button className="gb-action-btn gb-reset-btn" onClick={handleReset}>RESET</button>
+        </div>
 
-            <div className="gb-action-row">
-              <button className="gb-action-btn gb-reset-btn" onClick={handleReset}>RESET</button>
-            </div>
+        <div className="gb-action-row">
+          {sessionCount > 0 && (
+            <button
+              className="gb-action-btn gb-save-btn"
+              onClick={handleSaveSession}
+              disabled={savingSession}
+            >
+              {savingSession ? 'SAVING' : 'SAVE'}
+            </button>
+          )}
+          <button className="gb-clear-btn" onClick={handleClearSession}>CLEAR</button>
+        </div>
+      </div>
 
-            <div className="gb-action-row">
-              {sessionCount > 0 && (
-                <button
-                  className="gb-action-btn gb-save-btn"
-                  onClick={handleSaveSession}
-                  disabled={savingSession}
-                >
-                  {savingSession ? 'SAVING' : 'SAVE'}
-                </button>
-              )}
-              <button className="gb-clear-btn" onClick={handleClearSession}>CLEAR</button>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Debug panel — dev only */}
+      {/* Debug — dev only */}
       {import.meta.env.DEV && debugLog.length > 0 && (
         <div className="gb-debug">
           <strong>Debug:</strong>
@@ -327,10 +275,7 @@ function CounterPage() {
       )}
 
       <footer className="gb-footer">
-        <p>Point at bottles & cans</p>
-        <p style={{ fontSize: '7px', marginTop: '2px', opacity: 0.5 }}>
-          {modelType === 'yolo' ? 'YOLOv8 Custom' : 'COCO-SSD'} engine
-        </p>
+        <p>Pass items across the line</p>
       </footer>
     </div>
   )
