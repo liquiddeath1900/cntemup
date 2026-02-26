@@ -17,10 +17,10 @@ export function getLoggedInUser() {
 }
 
 // Save signup locally or to Supabase
-async function saveSignup({ name, email, zipcode, city, region, country }) {
+async function saveSignup({ name, email, city, region, country }) {
   // Always save locally first as backup
   const list = JSON.parse(localStorage.getItem(WAITLIST_KEY) || '[]')
-  list.push({ name, email, zipcode, city, region, country, created_at: new Date().toISOString() })
+  list.push({ name, email, city, region, country, created_at: new Date().toISOString() })
   localStorage.setItem(WAITLIST_KEY, JSON.stringify(list))
 
   // Also save to Supabase if available (non-blocking)
@@ -29,7 +29,6 @@ async function saveSignup({ name, email, zipcode, city, region, country }) {
       await supabase.from('waitlist').insert({
         name: name || null,
         email,
-        zipcode: zipcode || null,
         city: city || null,
         region: region || null,
         country: country || null,
@@ -40,7 +39,7 @@ async function saveSignup({ name, email, zipcode, city, region, country }) {
     }
   }
 
-  const user = { name, email, zipcode, loggedIn: true, created_at: new Date().toISOString() }
+  const user = { name, email, loggedIn: true, created_at: new Date().toISOString() }
   localStorage.setItem(USER_KEY, JSON.stringify(user))
   return user
 }
@@ -49,7 +48,6 @@ export function LandingPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
-  const [zipcode, setZipcode] = useState('')
   const [status, setStatus] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const geoRef = useRef({})
@@ -90,11 +88,10 @@ export function LandingPage() {
     e.preventDefault()
     if (!name.trim()) return setStatus('name_required')
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setStatus('email_invalid')
-    if (!zipcode.trim() || !/^\d{5}$/.test(zipcode)) return setStatus('zip_invalid')
     setStatus('saving')
     try {
       const geo = geoRef.current
-      await saveSignup({ name: name.trim(), email: email.trim().toLowerCase(), zipcode: zipcode.trim(), city: geo.city, region: geo.region, country: geo.country })
+      await saveSignup({ name: name.trim(), email: email.trim().toLowerCase(), city: geo.city, region: geo.region, country: geo.country })
       setStatus('done')
       setTimeout(() => navigate('/app'), 1200)
     } catch (err) {
@@ -296,18 +293,6 @@ export function LandingPage() {
               required
               autoComplete="email"
             />
-            <input
-              className="landing-input"
-              type="text"
-              placeholder="ZIP CODE"
-              value={zipcode}
-              onChange={(e) => { setZipcode(e.target.value.replace(/\D/g, '')); setStatus(null) }}
-              required
-              maxLength={5}
-              inputMode="numeric"
-              autoComplete="postal-code"
-            />
-
             <button
               className="landing-start-btn"
               type="submit"
@@ -321,9 +306,6 @@ export function LandingPage() {
             )}
             {status === 'email_invalid' && (
               <p className="landing-error">Enter a valid email.</p>
-            )}
-            {status === 'zip_invalid' && (
-              <p className="landing-error">Enter a valid 5-digit zip code.</p>
             )}
             {status === 'error' && (
               <p className="landing-error">Something went wrong. Try again.</p>
