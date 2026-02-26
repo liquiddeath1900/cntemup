@@ -25,8 +25,8 @@
     }
   ],
   "rewrites": [
-    { "source": "/app", "destination": "/index.html" },
-    { "source": "/settings", "destination": "/index.html" },
-    { "source": "/login", "destination": "/index.html" }
+    { "source": "/app", "destination": "/" },
+    { "source": "/settings", "destination": "/" },
+    { "source": "/login", "destination": "/" }
   ]
 }
