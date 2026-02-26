@@ -88,11 +88,13 @@ export function LandingPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!email) return
+    if (!name.trim()) return setStatus('name_required')
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setStatus('email_invalid')
+    if (!zipcode.trim() || !/^\d{5}$/.test(zipcode)) return setStatus('zip_invalid')
     setStatus('saving')
     try {
       const geo = geoRef.current
-      await saveSignup({ name, email, zipcode, city: geo.city, region: geo.region, country: geo.country })
+      await saveSignup({ name: name.trim(), email: email.trim().toLowerCase(), zipcode: zipcode.trim(), city: geo.city, region: geo.region, country: geo.country })
       setStatus('done')
       setTimeout(() => navigate('/app'), 1200)
     } catch (err) {
@@ -278,27 +280,29 @@ export function LandingPage() {
             <input
               className="landing-input"
               type="text"
-              placeholder="NAME (optional)"
+              placeholder="NAME"
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="name"
-            />
-            <input
-              className="landing-input"
-              type="email"
-              placeholder="EMAIL *"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setName(e.target.value); setStatus(null) }}
               required
-              autoComplete="email"
+              autoComplete="name"
               autoFocus
             />
             <input
               className="landing-input"
+              type="email"
+              placeholder="EMAIL"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setStatus(null) }}
+              required
+              autoComplete="email"
+            />
+            <input
+              className="landing-input"
               type="text"
-              placeholder="ZIP CODE (optional)"
+              placeholder="ZIP CODE"
               value={zipcode}
-              onChange={(e) => setZipcode(e.target.value)}
+              onChange={(e) => { setZipcode(e.target.value.replace(/\D/g, '')); setStatus(null) }}
+              required
               maxLength={5}
               inputMode="numeric"
               autoComplete="postal-code"
@@ -307,11 +311,20 @@ export function LandingPage() {
             <button
               className="landing-start-btn"
               type="submit"
-              disabled={status === 'saving' || !email}
+              disabled={status === 'saving'}
             >
               {status === 'saving' ? 'SAVING...' : '▶ START COUNTING'}
             </button>
 
+            {status === 'name_required' && (
+              <p className="landing-error">Enter your name.</p>
+            )}
+            {status === 'email_invalid' && (
+              <p className="landing-error">Enter a valid email.</p>
+            )}
+            {status === 'zip_invalid' && (
+              <p className="landing-error">Enter a valid 5-digit zip code.</p>
+            )}
             {status === 'error' && (
               <p className="landing-error">Something went wrong. Try again.</p>
             )}

@@ -1633,7 +1633,7 @@ body {
   width: 100%;
   padding: clamp(10px, 2.5vw, 14px) 12px;
   font-family: 'Press Start 2P', monospace;
-  font-size: var(--font-xs);
+  font-size: 16px; /* Prevents iOS auto-zoom on focus */
   background: rgba(155, 188, 15, 0.08);
   border: 2px solid var(--gb-screen-dark);
   border-radius: 6px;
