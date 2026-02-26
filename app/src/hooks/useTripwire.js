@@ -17,10 +17,10 @@ export function useTripwire() {
 
   // Pixel diff config
   const STRIP_HEIGHT = 30      // px tall strip around tripwire line
-  const CHANGE_THRESHOLD = 30  // min pixel value delta to count as "changed"
-  const TRIGGER_PERCENT = 0.15 // 15% of pixels must change to trigger
-  const COOLDOWN_MS = 400      // ms between triggers
-  const TARGET_FPS = 20        // ~50ms between frames
+  const CHANGE_THRESHOLD = 25  // min pixel value delta to count as "changed"
+  const TRIGGER_PERCENT = 0.12 // 12% of pixels must change to trigger
+  const COOLDOWN_MS = 200      // ms between triggers (fast passes)
+  const TARGET_FPS = 30        // ~33ms between frames
 
   // Set external trigger callback
   const setOnTrigger = useCallback((fn) => {
