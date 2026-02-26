@@ -1671,6 +1671,53 @@ body {
   text-align: center;
 }
 
+/* Google sign-in button */
+.landing-google-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: clamp(10px, 2.5vw, 14px) 12px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  background: #fff;
+  color: #333;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.landing-google-btn:active {
+  transform: scale(0.97);
+  background: #f0f0f0;
+}
+
+.landing-google-btn svg {
+  flex-shrink: 0;
+}
+
+/* OR divider */
+.landing-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  color: var(--gb-text-dim);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+}
+
+.landing-divider::before,
+.landing-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--gb-screen-dark);
+}
+
 .landing-error {
   font-family: 'Press Start 2P', monospace;
   font-size: var(--font-xs);
