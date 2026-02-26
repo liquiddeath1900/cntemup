@@ -853,6 +853,276 @@ body {
   flex-shrink: 0;
 }
 
+/* ===== MODE SELECTOR ===== */
+.mode-selector {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  padding: 0 var(--screen-pad);
+  flex-shrink: 0;
+}
+
+.mode-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  padding: clamp(6px, 1.5vw, 10px) clamp(16px, 5vw, 28px);
+  border: 2px solid #555;
+  background: linear-gradient(180deg, #6a6a6a, #4a4a4a);
+  color: #999;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mode-btn:first-child {
+  border-radius: 6px 0 0 6px;
+  border-right: 1px solid #555;
+}
+
+.mode-btn:last-child {
+  border-radius: 0 6px 6px 0;
+  border-left: 1px solid #555;
+}
+
+.mode-btn-active {
+  background: linear-gradient(180deg, #2d8a5e, #1a6b42);
+  color: white;
+  border-color: #1a6b42;
+  box-shadow: 0 0 8px rgba(45, 138, 94, 0.4);
+}
+
+/* ===== TALLY MODE ===== */
+.tally-mode {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: clamp(4px, 1vw, 8px);
+}
+
+.tally-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.tally-toggle-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  padding: clamp(4px, 1vw, 6px) clamp(12px, 3vw, 20px);
+  border: 1px solid var(--gb-screen-dark);
+  background: var(--gb-screen-bg);
+  color: var(--gb-text-dim);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tally-toggle-btn:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.tally-toggle-btn:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.tally-toggle-active {
+  background: var(--gb-screen-dark);
+  color: var(--gb-screen-light);
+  border-color: var(--gb-screen-light);
+}
+
+/* TAP sub-mode — big +1 button */
+.tally-tap-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 2vw, 16px);
+  background: var(--gb-screen-bg);
+  border-radius: clamp(4px, 1vw, 8px);
+  border: 2px solid var(--gb-screen-dark);
+}
+
+.tap-button {
+  width: clamp(100px, 30vw, 140px);
+  height: clamp(100px, 30vw, 140px);
+  border-radius: 50%;
+  border: 4px solid var(--gb-screen-light);
+  background: linear-gradient(180deg, rgba(155, 188, 15, 0.2), rgba(155, 188, 15, 0.05));
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s, box-shadow 0.1s, border-color 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow:
+    0 0 20px rgba(155, 188, 15, 0.2),
+    inset 0 0 20px rgba(155, 188, 15, 0.1);
+}
+
+.tap-button:active {
+  transform: scale(0.92);
+  border-color: #fff;
+  box-shadow:
+    0 0 30px rgba(155, 188, 15, 0.5),
+    inset 0 0 30px rgba(155, 188, 15, 0.3);
+}
+
+.tap-button-plus {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xxl);
+  color: var(--gb-screen-light);
+  text-shadow: 0 0 12px rgba(155, 188, 15, 0.6);
+}
+
+.tap-hint {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  color: var(--gb-text-dim);
+}
+
+/* TRIPWIRE sub-mode */
+.tally-tripwire-area {
+  flex: 1;
+  position: relative;
+  background: var(--gb-screen-bg);
+  border-radius: clamp(4px, 1vw, 8px);
+  border: 2px solid var(--gb-screen-dark);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.tally-tripwire-area .camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tally-tripwire-area .camera-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--gb-text-dim);
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+}
+
+.tally-tripwire-area .camera-placeholder span {
+  font-size: clamp(24px, 8vw, 40px);
+}
+
+/* Tripwire line */
+.tripwire-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  transform: translateY(-50%);
+  background: repeating-linear-gradient(
+    90deg,
+    #ff4444,
+    #ff4444 8px,
+    transparent 8px,
+    transparent 16px
+  );
+  box-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
+  cursor: ns-resize;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.tripwire-label {
+  position: absolute;
+  left: 8px;
+  top: -18px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #ff4444;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+.tripwire-handle {
+  position: absolute;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255, 68, 68, 0.8);
+  border: 2px solid #fff;
+  box-shadow: 0 0 6px rgba(255, 68, 68, 0.5);
+  cursor: ns-resize;
+}
+
+/* Triggered flash — line turns green briefly */
+.tripwire-trigger-flash {
+  background: repeating-linear-gradient(
+    90deg,
+    #00ff66,
+    #00ff66 8px,
+    transparent 8px,
+    transparent 16px
+  ) !important;
+  box-shadow: 0 0 20px rgba(0, 255, 102, 0.8) !important;
+  animation: tripwirePulse 0.2s ease-out;
+}
+
+.tripwire-trigger-flash .tripwire-label {
+  color: #00ff66 !important;
+}
+
+.tripwire-trigger-flash .tripwire-handle {
+  background: rgba(0, 255, 102, 0.8) !important;
+}
+
+@keyframes tripwirePulse {
+  0% { transform: translateY(-50%) scaleY(3); }
+  100% { transform: translateY(-50%) scaleY(1); }
+}
+
+/* Tripwire start/stop buttons */
+.tripwire-start-btn,
+.tripwire-stop-btn {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  padding: 8px 20px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  z-index: 5;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tripwire-start-btn {
+  background: linear-gradient(180deg, #2d8a5e, #1a6b42);
+  color: white;
+  box-shadow: 0 3px 0 #0f4a2d, 0 0 12px rgba(45, 138, 94, 0.3);
+}
+
+.tripwire-stop-btn {
+  background: linear-gradient(180deg, #c8384a, var(--gb-btn-a));
+  color: white;
+  box-shadow: 0 3px 0 #7a1f2a, 0 0 12px rgba(200, 56, 74, 0.3);
+}
+
+.tripwire-start-btn:active,
+.tripwire-stop-btn:active {
+  transform: translateX(-50%) scale(0.95) translateY(1px);
+}
+
 /* ===== iOS SAFE AREAS ===== */
 @supports (padding: max(0px)) {
   .gb-label {
@@ -873,6 +1143,9 @@ body {
   .gb-scan-btn { width: 48px; height: 48px; }
   .gb-action-btn { padding: 6px 12px; }
   .gb-footer { display: none; }
+  .tap-button { width: 80px; height: 80px; }
+  .mode-selector { padding: 0 4px; }
+  .mode-btn { padding: 4px 12px; }
 }
 
 /* ===== RESPONSIVE: tall phones (Pro Max, Ultra) ===== */

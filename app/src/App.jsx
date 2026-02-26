@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Camera, isInCountZone } from './components/Camera'
 import { Counter } from './components/Counter'
+import { ModeSelector } from './components/ModeSelector'
+import { TallyMode } from './components/TallyMode'
 import { Auth } from './components/Auth'
 import { Settings } from './components/Settings'
 import { useCamera } from './hooks/useCamera'
@@ -45,6 +47,7 @@ function CounterPage() {
   const [isRunning, setIsRunning] = useState(false)
   const [savingSession, setSavingSession] = useState(false)
   const [topDetection, setTopDetection] = useState(null) // best detection for badge
+  const [mode, setMode] = useState('scan') // 'scan' | 'tally'
 
   const { user, profile } = useAuth()
   const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code)
@@ -175,92 +178,141 @@ function CounterPage() {
         <p>Bottle & Can Counter</p>
       </div>
 
-      {/* LCD Screen bezel */}
-      <div className="gb-screen-bezel">
-        <div className="gb-screen">
-          {/* Camera viewfinder */}
-          <Camera
-            videoRef={videoRef}
-            isStreaming={isStreaming}
-            videoReady={videoReady}
-            detections={detections}
-            error={cameraError}
-            devices={devices}
-            onTapToPlay={handleTapToPlay}
-            onSwitchCamera={switchCamera}
-          />
+      {/* Mode toggle: SCAN | TALLY */}
+      <ModeSelector mode={mode} setMode={setMode} />
 
-          {/* LCD count display */}
-          <Counter
-            count={count}
-            sessionCount={sessionCount}
-            isDetecting={isRunning && isStreaming}
-            depositRate={depositRate}
-            stateCode={profile?.state_code}
-            calculateDeposit={calculateDeposit}
-            rules={rules}
-            topDetection={topDetection}
-          />
+      {/* ===== SCAN MODE (existing, untouched) ===== */}
+      {mode === 'scan' && (
+        <>
+          <div className="gb-screen-bezel">
+            <div className="gb-screen">
+              <Camera
+                videoRef={videoRef}
+                isStreaming={isStreaming}
+                videoReady={videoReady}
+                detections={detections}
+                error={cameraError}
+                devices={devices}
+                onTapToPlay={handleTapToPlay}
+                onSwitchCamera={switchCamera}
+              />
 
-          {/* Model loading progress */}
-          {isLoading && (
-            <div className="gb-loading">
-              <span className="gb-loading-text">LOADING AI... {loadProgress}%</span>
-              <div className="gb-loading-bar">
-                <div className="gb-loading-fill" style={{ width: `${loadProgress}%` }} />
-              </div>
+              <Counter
+                count={count}
+                sessionCount={sessionCount}
+                isDetecting={isRunning && isStreaming}
+                depositRate={depositRate}
+                stateCode={profile?.state_code}
+                calculateDeposit={calculateDeposit}
+                rules={rules}
+                topDetection={topDetection}
+              />
+
+              {isLoading && (
+                <div className="gb-loading">
+                  <span className="gb-loading-text">LOADING AI... {loadProgress}%</span>
+                  <div className="gb-loading-bar">
+                    <div className="gb-loading-fill" style={{ width: `${loadProgress}%` }} />
+                  </div>
+                </div>
+              )}
+
+              {error && <div className="gb-error">{error}</div>}
             </div>
-          )}
+          </div>
 
-          {error && <div className="gb-error">{error}</div>}
-        </div>
-      </div>
+          <div className="gb-controls">
+            <div className="gb-dpad-row">
+              <button className="gb-dpad-btn gb-dpad-minus" onClick={handleManualSub}>−</button>
+              {!isRunning ? (
+                <button
+                  className="gb-dpad-btn gb-scan-btn"
+                  onClick={handleStart}
+                  disabled={isLoading}
+                >
+                  {isLoading ? '...' : 'START'}
+                </button>
+              ) : (
+                <button className="gb-dpad-btn gb-scan-btn gb-stop-btn" onClick={handleStop}>
+                  STOP
+                </button>
+              )}
+              <button className="gb-dpad-btn gb-dpad-plus" onClick={handleManualAdd}>+</button>
+            </div>
 
-      {/* Controls — D-pad + action buttons */}
-      <div className="gb-controls">
-        {/* D-pad row: [-] [START/STOP] [+] */}
-        <div className="gb-dpad-row">
-          <button className="gb-dpad-btn gb-dpad-minus" onClick={handleManualSub}>−</button>
+            <div className="gb-action-row">
+              <button className="gb-action-btn gb-start-btn" onClick={isRunning ? handleStop : handleStart} disabled={isLoading}>
+                {isRunning ? 'STOP' : 'PAUSE'}
+              </button>
+              <button className="gb-action-btn gb-reset-btn" onClick={handleReset}>RESET</button>
+            </div>
 
-          {!isRunning ? (
-            <button
-              className="gb-dpad-btn gb-scan-btn"
-              onClick={handleStart}
-              disabled={isLoading}
-            >
-              {isLoading ? '...' : 'START'}
-            </button>
-          ) : (
-            <button className="gb-dpad-btn gb-scan-btn gb-stop-btn" onClick={handleStop}>
-              STOP
-            </button>
-          )}
+            <div className="gb-action-row">
+              {sessionCount > 0 && (
+                <button
+                  className="gb-action-btn gb-save-btn"
+                  onClick={handleSaveSession}
+                  disabled={savingSession}
+                >
+                  {savingSession ? 'SAVING' : 'SAVE'}
+                </button>
+              )}
+              <button className="gb-clear-btn" onClick={handleClearSession}>CLEAR</button>
+            </div>
+          </div>
+        </>
+      )}
 
-          <button className="gb-dpad-btn gb-dpad-plus" onClick={handleManualAdd}>+</button>
-        </div>
+      {/* ===== TALLY MODE (new) ===== */}
+      {mode === 'tally' && (
+        <>
+          <div className="gb-screen-bezel">
+            <div className="gb-screen">
+              <TallyMode
+                count={count}
+                setCount={setCount}
+                sessionCount={sessionCount}
+                setSessionCount={setSessionCount}
+              />
 
-        {/* Action buttons */}
-        <div className="gb-action-row">
-          <button className="gb-action-btn gb-start-btn" onClick={isRunning ? handleStop : handleStart} disabled={isLoading}>
-            {isRunning ? 'STOP' : 'PAUSE'}
-          </button>
-          <button className="gb-action-btn gb-reset-btn" onClick={handleReset}>RESET</button>
-        </div>
+              <Counter
+                count={count}
+                sessionCount={sessionCount}
+                isDetecting={false}
+                depositRate={depositRate}
+                stateCode={profile?.state_code}
+                calculateDeposit={calculateDeposit}
+                rules={rules}
+                topDetection={null}
+              />
+            </div>
+          </div>
 
-        {/* Save / Clear session */}
-        <div className="gb-action-row">
-          {sessionCount > 0 && (
-            <button
-              className="gb-action-btn gb-save-btn"
-              onClick={handleSaveSession}
-              disabled={savingSession}
-            >
-              {savingSession ? 'SAVING' : 'SAVE'}
-            </button>
-          )}
-          <button className="gb-clear-btn" onClick={handleClearSession}>CLEAR</button>
-        </div>
-      </div>
+          <div className="gb-controls">
+            <div className="gb-dpad-row">
+              <button className="gb-dpad-btn gb-dpad-minus" onClick={handleManualSub}>−</button>
+              <button className="gb-dpad-btn gb-dpad-plus" onClick={handleManualAdd}>+</button>
+            </div>
+
+            <div className="gb-action-row">
+              <button className="gb-action-btn gb-reset-btn" onClick={handleReset}>RESET</button>
+            </div>
+
+            <div className="gb-action-row">
+              {sessionCount > 0 && (
+                <button
+                  className="gb-action-btn gb-save-btn"
+                  onClick={handleSaveSession}
+                  disabled={savingSession}
+                >
+                  {savingSession ? 'SAVING' : 'SAVE'}
+                </button>
+              )}
+              <button className="gb-clear-btn" onClick={handleClearSession}>CLEAR</button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Debug panel — dev only */}
       {import.meta.env.DEV && debugLog.length > 0 && (
