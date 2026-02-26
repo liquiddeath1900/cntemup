@@ -24,6 +24,8 @@
     }
   ],
   "rewrites": [
-    { "source": "/((?!api|_next|sitemap\\.xml|robots\\.txt|favicon|og-image|models|sw\\.js|workbox|assets|manifest).*)", "destination": "/index.html" }
+    { "source": "/bottle-deposit-states", "destination": "/bottle-deposit-states.html" },
+    { "source": "/how-many-cans-to-make-100", "destination": "/how-many-cans-to-make-100.html" },
+    { "source": "/((?!api|_next|sitemap\\.xml|robots\\.txt|favicon|og-image|models|sw\\.js|workbox|assets|manifest|bottle-deposit|how-many).*)", "destination": "/index.html" }
   ]
 }

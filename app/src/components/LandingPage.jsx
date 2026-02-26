@@ -315,6 +315,10 @@ export function LandingPage() {
       </section>
 
       <footer className="landing-footer">
+        <div className="landing-footer-links">
+          <a href="/bottle-deposit-states">Deposit States Guide</a>
+          <a href="/how-many-cans-to-make-100">Earnings Calculator</a>
+        </div>
         <p>CNTEM'UP © 2026</p>
         <p>BUILT IN NYC</p>
       </footer>

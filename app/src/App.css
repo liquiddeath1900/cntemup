@@ -1844,6 +1844,28 @@ body {
   border-top: 1px solid var(--gb-screen-dark);
 }
 
+.landing-footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.landing-footer-links a {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--gb-screen-light);
+  text-decoration: none;
+  padding: 6px 10px;
+  border: 1px solid var(--gb-screen-dark);
+  border-radius: 4px;
+}
+
+.landing-footer-links a:active {
+  opacity: 0.6;
+}
+
 .landing-footer p {
   font-family: 'Press Start 2P', monospace;
   font-size: 8px;
