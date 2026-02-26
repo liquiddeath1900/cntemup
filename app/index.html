@@ -2,9 +2,108 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>app</title>
+
+    <!-- Primary Meta Tags -->
+    <title>CNTEM'UP — Bottle & Can Counter App | Count Your Deposit Refunds</title>
+    <meta name="description" content="Free bottle and can counting app. Use your phone camera to count containers with tripwire detection. Track your deposit refunds instantly. Works in all bottle bill states." />
+    <meta name="keywords" content="bottle counter, can counter, bottle deposit, deposit refund, bottle bill, recycling counter, container counting app, bottle return, can return, redemption center" />
+    <meta name="author" content="CNTEM'UP" />
+    <link rel="canonical" href="https://cntemup.com/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://cntemup.com/" />
+    <meta property="og:title" content="CNTEM'UP — Bottle & Can Counter App" />
+    <meta property="og:description" content="Count bottles and cans with your phone camera. Track deposit refunds in real-time. Free to use." />
+    <meta property="og:image" content="https://cntemup.com/og-image.svg" />
+    <meta property="og:site_name" content="CNTEM'UP" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://cntemup.com/" />
+    <meta name="twitter:title" content="CNTEM'UP — Bottle & Can Counter App" />
+    <meta name="twitter:description" content="Count bottles and cans with your phone camera. Track deposit refunds in real-time." />
+    <meta name="twitter:image" content="https://cntemup.com/og-image.svg" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#0f380f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Structured Data — WebApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "CNTEM'UP",
+      "alternateName": "CNTEMUP",
+      "description": "Free bottle and can counting app using phone camera tripwire detection. Track deposit refunds for bottle bill states worldwide.",
+      "url": "https://cntemup.com",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires a modern browser with camera access",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Camera-based bottle and can counting",
+        "Tripwire motion detection",
+        "Real-time count tracking",
+        "Deposit value calculator",
+        "Works on any phone with a camera"
+      ],
+      "screenshot": "https://cntemup.com/og-image.svg"
+    }
+    </script>
+
+    <!-- Structured Data — FAQ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How does CNTEM'UP count bottles and cans?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "CNTEM'UP uses your phone camera with a tripwire detection line. Prop your phone up, start the camera, and slide bottles or cans past the line. Each item that crosses the tripwire is counted automatically."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is CNTEM'UP free to use?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, CNTEM'UP is completely free to use. Sign up with your email or Google account and start counting immediately."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What states have bottle deposit laws?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "As of 2026, bottle deposit laws exist in California, Connecticut, Hawaii, Iowa, Maine, Massachusetts, Michigan, New York, Oregon, and Vermont. Deposit values range from 5 to 15 cents per container."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need to install anything?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No installation required. CNTEM'UP works directly in your phone's web browser. You can also add it to your home screen for a full-screen app experience."
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
