@@ -56,13 +56,12 @@ export function playSuccessBeep() {
   setTimeout(() => playTone(784, 0.12, 'square', 0.2), 160) // G5
 }
 
-// Game Boy boot chime — uses same playTone pattern that works on iOS
+// Game Boy boot chime — ba-ding! Uses separate contexts per note (iOS compatible)
 export function playBootChime() {
-  const ctx = createAudioCtx()
-  playTone(262, 0.1, 'square', 0.3, ctx)          // C4 — low ping
+  playTone(262, 0.12, 'square', 0.3)              // C4 — low ping
   setTimeout(() => {
-    playTone(523, 0.3, 'square', 0.35, ctx)        // C5 — high ding!
-  }, 120)
+    playTone(523, 0.25, 'square', 0.35)            // C5 — high ding!
+  }, 130)
 }
 
 // Hook for mute state
