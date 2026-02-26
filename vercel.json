@@ -27,7 +27,6 @@
   "rewrites": [
     { "source": "/app", "destination": "/index.html" },
     { "source": "/settings", "destination": "/index.html" },
-    { "source": "/login", "destination": "/index.html" },
-    { "source": "/((?!assets|models|favicon|og-image|robots|sitemap|sw|workbox|bottle-deposit|how-many).*)", "destination": "/index.html" }
+    { "source": "/login", "destination": "/index.html" }
   ]
 }
