@@ -8,6 +8,7 @@ import { useCamera } from './hooks/useCamera'
 import { useTripwire } from './hooks/useTripwire'
 import { useAuth } from './hooks/useAuth'
 import { useDepositRules } from './hooks/useDepositRules'
+import { useSound } from './hooks/useSound'
 import { supabase, supabaseEnabled } from './lib/supabase'
 import './App.css'
 
@@ -46,16 +47,18 @@ function CounterPage() {
 
   const { user, profile } = useAuth()
   const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code)
+  const { muted, toggleMute, playCount } = useSound()
   const { videoRef, isStreaming, videoReady, error: cameraError, debugLog, devices, startCamera, stopCamera, switchCamera, handleTapToPlay } = useCamera()
   const { startTripwire, stopTripwire, tripwireY, setTripwireY, isTriggered, setOnTrigger } = useTripwire()
 
-  // Wire tripwire trigger → increment count
+  // Wire tripwire trigger → increment count + sound
   useEffect(() => {
     setOnTrigger(() => {
       setCount(prev => prev + 1)
       setSessionCount(prev => prev + 1)
+      playCount()
     })
-  }, [setCount, setSessionCount, setOnTrigger])
+  }, [setCount, setSessionCount, setOnTrigger, playCount])
 
   // Start tripwire when video is ready
   useEffect(() => {
@@ -67,6 +70,7 @@ function CounterPage() {
   const handleManualAdd = () => {
     setCount(prev => prev + 1)
     setSessionCount(prev => prev + 1)
+    playCount()
   }
 
   const handleManualSub = () => {
@@ -158,6 +162,9 @@ function CounterPage() {
       {/* Header */}
       <div className="gb-label">
         <div className="gb-label-row">
+          <button className="mute-btn" onClick={toggleMute}>
+            {muted ? '🔇' : '🔊'}
+          </button>
           <h1>CNTEM'UP</h1>
           <a href="/settings" className="settings-link">SET</a>
         </div>

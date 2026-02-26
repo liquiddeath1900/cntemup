@@ -98,6 +98,21 @@ body {
   border-radius: 4px;
 }
 
+.mute-btn {
+  background: none;
+  border: 1px solid #999;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 16px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1;
+}
+
+.mute-btn:active {
+  opacity: 0.6;
+}
+
 .settings-link:active {
   color: #1a1a6e;
   border-color: #1a1a6e;
