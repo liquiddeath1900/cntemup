@@ -60,6 +60,45 @@ export function playSuccessBeep() {
   setTimeout(() => playTone(784, 0.12, 'square', 0.2), 160) // G5
 }
 
+// Game Boy boot chime — the classic "ba-ding!" power-on sound
+export function playBootChime() {
+  try {
+    const ctx = getAudioCtx()
+    const now = ctx.currentTime
+
+    // First note — low ping
+    const osc1 = ctx.createOscillator()
+    const gain1 = ctx.createGain()
+    osc1.type = 'square'
+    osc1.frequency.setValueAtTime(131, now)        // C3
+    osc1.frequency.setValueAtTime(262, now + 0.05) // slide up to C4
+    gain1.gain.setValueAtTime(0, now)
+    gain1.gain.linearRampToValueAtTime(0.3, now + 0.01)
+    gain1.gain.linearRampToValueAtTime(0.15, now + 0.08)
+    gain1.gain.linearRampToValueAtTime(0, now + 0.15)
+    osc1.connect(gain1)
+    gain1.connect(ctx.destination)
+    osc1.start(now)
+    osc1.stop(now + 0.2)
+
+    // Second note — the iconic high "ding!"
+    const osc2 = ctx.createOscillator()
+    const gain2 = ctx.createGain()
+    osc2.type = 'square'
+    osc2.frequency.setValueAtTime(523, now + 0.12) // C5
+    gain2.gain.setValueAtTime(0, now + 0.12)
+    gain2.gain.linearRampToValueAtTime(0.35, now + 0.13)
+    gain2.gain.setValueAtTime(0.35, now + 0.2)
+    gain2.gain.linearRampToValueAtTime(0, now + 0.55)
+    osc2.connect(gain2)
+    gain2.connect(ctx.destination)
+    osc2.start(now + 0.12)
+    osc2.stop(now + 0.6)
+  } catch {
+    // Audio not supported — fail silently
+  }
+}
+
 // Hook for mute state
 const MUTE_KEY = 'cntemup_muted'
 
@@ -90,5 +129,9 @@ export function useSound() {
     if (!mutedRef.current) playSuccessBeep()
   }, [])
 
-  return { muted, toggleMute, playCount, playError, playSuccess }
+  const playBoot = useCallback(() => {
+    if (!mutedRef.current) playBootChime()
+  }, [])
+
+  return { muted, toggleMute, playCount, playError, playSuccess, playBoot }
 }

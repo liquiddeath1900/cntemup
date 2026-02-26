@@ -47,7 +47,7 @@ function CounterPage() {
 
   const { user, profile } = useAuth()
   const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code)
-  const { muted, toggleMute, playCount } = useSound()
+  const { muted, toggleMute, playCount, playBoot } = useSound()
   const { videoRef, isStreaming, videoReady, error: cameraError, debugLog, devices, startCamera, stopCamera, switchCamera, handleTapToPlay } = useCamera()
   const { startTripwire, stopTripwire, tripwireY, setTripwireY, isTriggered, setOnTrigger } = useTripwire()
 
@@ -81,6 +81,7 @@ function CounterPage() {
   }
 
   const handleStart = async () => {
+    playBoot()
     setIsRunning(true)
     await startCamera()
   }
