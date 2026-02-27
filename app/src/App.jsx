@@ -4,11 +4,15 @@ import { LandingPage } from './components/LandingPage'
 import { Counter } from './components/Counter'
 import { Auth } from './components/Auth'
 import { Settings } from './components/Settings'
+import { History } from './components/History'
+import { Tips } from './components/Tips'
+import { AlertModal } from './components/AlertModal'
 import { useCamera } from './hooks/useCamera'
 import { useTripwire } from './hooks/useTripwire'
 import { useAuth } from './hooks/useAuth'
 import { useDepositRules } from './hooks/useDepositRules'
 import { useSound } from './hooks/useSound'
+import { usePremium } from './hooks/usePremium'
 import { supabase, supabaseEnabled } from './lib/supabase'
 import './App.css'
 
@@ -43,22 +47,34 @@ function CounterPage() {
   const [isRunning, setIsRunning] = useState(false)
   const [savingSession, setSavingSession] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [showAlertModal, setShowAlertModal] = useState(false)
+  const [alertFired, setAlertFired] = useState(false)
   const cameraContainerRef = useRef(null)
 
   const { user, profile } = useAuth()
+  const { isPremium, alertTarget } = usePremium(profile)
   const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code)
-  const { muted, toggleMute, playCount, playBoot } = useSound()
+  const { muted, toggleMute, playCount, playAlarm, playBoot } = useSound()
   const { videoRef, isStreaming, videoReady, error: cameraError, debugLog, devices, startCamera, stopCamera, switchCamera, handleTapToPlay } = useCamera()
   const { startTripwire, stopTripwire, tripwireY, setTripwireY, isTriggered, setOnTrigger } = useTripwire()
 
-  // Wire tripwire trigger → increment count + sound
+  // Wire tripwire trigger → increment count + sound + alert check
   useEffect(() => {
     setOnTrigger(() => {
       setCount(prev => prev + 1)
-      setSessionCount(prev => prev + 1)
+      setSessionCount(prev => {
+        const next = prev + 1
+        // Check alert target (premium only)
+        if (isPremium && alertTarget > 0 && next === alertTarget && !alertFired) {
+          setAlertFired(true)
+          setShowAlertModal(true)
+          playAlarm()
+        }
+        return next
+      })
       playCount()
     })
-  }, [setCount, setSessionCount, setOnTrigger, playCount])
+  }, [setCount, setSessionCount, setOnTrigger, playCount, isPremium, alertTarget, alertFired, playAlarm])
 
   // Start tripwire when video is ready
   useEffect(() => {
@@ -104,6 +120,8 @@ function CounterPage() {
   const handleClearSession = () => {
     setCount(0)
     setSessionCount(0)
+    setAlertFired(false)
+    setShowAlertModal(false)
   }
 
   const handleSaveSession = async () => {
@@ -165,13 +183,26 @@ function CounterPage() {
 
   return (
     <div className="app">
+      {/* Alert modal */}
+      {showAlertModal && (
+        <AlertModal
+          target={alertTarget}
+          count={sessionCount}
+          onSave={() => {
+            setShowAlertModal(false)
+            handleSaveSession()
+          }}
+          onKeepCounting={() => setShowAlertModal(false)}
+        />
+      )}
+
       {/* Header */}
       <div className="gb-label">
         <div className="gb-label-row">
           <button className="mute-btn" onClick={toggleMute}>
             {muted ? '🔇' : '🔊'}
           </button>
-          <h1>CNTEM'UP</h1>
+          <h1>CNTEM'UP{isPremium && <span className="pro-badge">PRO</span>}</h1>
           <a href="/settings" className="settings-link">SET</a>
         </div>
         <p>Bottle & Can Counter</p>
@@ -300,10 +331,12 @@ function App() {
   const { user, loading, setupLocal } = useAuth()
   const didSetup = useRef(false)
 
-  if (!loading && !user && !didSetup.current) {
-    didSetup.current = true
-    setupLocal('NY', 'Counter')
-  }
+  useEffect(() => {
+    if (!loading && !user && !didSetup.current) {
+      didSetup.current = true
+      setupLocal('NY', 'Counter')
+    }
+  }, [loading, user, setupLocal])
 
   if (loading) {
     return (
@@ -323,6 +356,8 @@ function App() {
         <Route path="/app" element={<CounterPage />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/login" element={<Auth />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/tips" element={<Tips />} />
       </Routes>
     </BrowserRouter>
   )

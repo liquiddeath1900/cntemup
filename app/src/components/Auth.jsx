@@ -30,24 +30,33 @@ export function Auth() {
   }
 
   return (
-    <div className="app">
-      <header className="header">
-        <h1>CNTEM'UP</h1>
-        <p>Bottle & Can Counter</p>
+    <div className="auth-page">
+      <div className="settings-scanlines" />
+
+      <header className="auth-header">
+        <h1 className="auth-title">CNTEM'UP</h1>
+        <p className="auth-tagline">Bottle & Can Counter</p>
       </header>
 
-      <main className="main">
+      <main className="auth-main">
         <div className="auth-card">
-          <h2>Get Started</h2>
-          <p className="auth-subtitle">Select your state to see deposit rates</p>
+          <h2>{supabaseEnabled ? (isSignUp ? 'CREATE ACCOUNT' : 'SIGN IN') : 'GET STARTED'}</h2>
+          <p className="auth-subtitle">
+            {supabaseEnabled
+              ? (isSignUp ? 'Enter your info to sign up' : 'Welcome back')
+              : 'Pick your name and state to start counting'
+            }
+          </p>
 
           <form onSubmit={supabaseEnabled ? handleSubmit : handleLocalStart} className="auth-form">
             <input
               type="text"
-              placeholder="Your Name (optional)"
+              placeholder="Full Name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               className="auth-input"
+              required
+              minLength={2}
             />
 
             <StateSelector
@@ -55,7 +64,6 @@ export function Auth() {
               onChange={setStateCode}
             />
 
-            {/* Only show email/password if Supabase is connected */}
             {supabaseEnabled && (
               <>
                 <input
@@ -80,10 +88,10 @@ export function Auth() {
 
             {error && <div className="auth-error">{error}</div>}
 
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="auth-submit-btn">
               {supabaseEnabled
-                ? (isSignUp ? 'Sign Up' : 'Sign In')
-                : 'Start Counting'
+                ? (isSignUp ? 'SIGN UP' : 'SIGN IN')
+                : 'START COUNTING'
               }
             </button>
           </form>
@@ -91,11 +99,11 @@ export function Auth() {
           {supabaseEnabled && (
             <>
               <div className="auth-divider"><span>or</span></div>
-              <button className="btn btn-google" onClick={signInWithGoogle}>
-                Continue with Google
+              <button className="auth-google-btn" onClick={signInWithGoogle}>
+                CONTINUE WITH GOOGLE
               </button>
               <button
-                className="btn btn-ghost auth-toggle"
+                className="auth-toggle"
                 onClick={() => setIsSignUp(!isSignUp)}
               >
                 {isSignUp
@@ -107,6 +115,10 @@ export function Auth() {
           )}
         </div>
       </main>
+
+      <footer className="settings-footer">
+        <p>CNTEM'UP &copy; 2026</p>
+      </footer>
     </div>
   )
 }

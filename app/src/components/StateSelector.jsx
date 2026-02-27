@@ -11,9 +11,9 @@ export function StateSelector({ value, onChange, label = 'Your State' }) {
         className="state-selector-select"
       >
         <option value="" disabled>Select your state</option>
-        {US_STATES.map(state => (
+        {US_STATES.filter(state => DEPOSIT_STATES.has(state.code)).map(state => (
           <option key={state.code} value={state.code}>
-            {state.name} {DEPOSIT_STATES.has(state.code) ? '(Deposit)' : ''}
+            {state.name}
           </option>
         ))}
       </select>

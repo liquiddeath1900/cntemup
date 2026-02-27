@@ -56,6 +56,19 @@ export function playSuccessBeep() {
   setTimeout(() => playTone(784, 0.12, 'square', 0.2), 160) // G5
 }
 
+// Alarm sound — distinct urgent beep pattern for bag limit alert
+export function playAlarmBeep() {
+  const ctx = createAudioCtx()
+  // Three rapid descending beeps — attention-grabbing
+  playTone(1047, 0.1, 'square', 0.35, ctx) // C6
+  setTimeout(() => playTone(880, 0.1, 'square', 0.35, ctx), 120)  // A5
+  setTimeout(() => playTone(698, 0.15, 'square', 0.35, ctx), 240) // F5
+  // Repeat pattern after short pause
+  setTimeout(() => playTone(1047, 0.1, 'square', 0.35, ctx), 500)
+  setTimeout(() => playTone(880, 0.1, 'square', 0.35, ctx), 620)
+  setTimeout(() => playTone(698, 0.15, 'square', 0.35, ctx), 740)
+}
+
 // Game Boy boot chime — ba-ding! Uses separate contexts per note (iOS compatible)
 export function playBootChime() {
   playTone(262, 0.12, 'square', 0.3)              // C4 — low ping
@@ -98,5 +111,9 @@ export function useSound() {
     if (!mutedRef.current) playBootChime()
   }, [])
 
-  return { muted, toggleMute, playCount, playError, playSuccess, playBoot }
+  const playAlarm = useCallback(() => {
+    if (!mutedRef.current) playAlarmBeep()
+  }, [])
+
+  return { muted, toggleMute, playCount, playError, playSuccess, playBoot, playAlarm }
 }
