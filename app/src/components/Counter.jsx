@@ -15,6 +15,7 @@ export function Counter({
   calculateDeposit,
   rules,
   topDetection,
+  isPremium = false,
 }) {
   const hasDeposit = stateCode && hasDepositLaw(stateCode)
   const sessionValue = calculateDeposit ? calculateDeposit(sessionCount) : 0
@@ -40,8 +41,8 @@ export function Counter({
         )}
       </div>
 
-      {/* Deposit value */}
-      {hasDeposit && sessionCount > 0 && (
+      {/* Deposit value — Pro only */}
+      {isPremium && hasDeposit && sessionCount > 0 && (
         <div className="gb-lcd-deposit">
           <span className="gb-lcd-deposit-value">{formatCurrency(sessionValue)}</span>
           <span className="gb-lcd-deposit-label">

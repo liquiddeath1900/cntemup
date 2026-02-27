@@ -265,6 +265,7 @@ function CounterPage() {
             calculateDeposit={calculateDeposit}
             rules={rules}
             topDetection={null}
+            isPremium={isPremium}
           />
 
           {error && <div className="gb-error">{error}</div>}
