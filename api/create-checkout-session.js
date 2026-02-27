@@ -1,8 +1,13 @@
 // Vercel Serverless Function — Create Stripe Checkout Session
 // POST /api/create-checkout-session { userId, email }
 import Stripe from 'stripe'
+import { createClient } from '@supabase/supabase-js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+const supabase = createClient(
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+)
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -12,8 +17,20 @@ export default async function handler(req, res) {
   try {
     const { userId, email } = req.body
 
-    if (!userId || !email) {
-      return res.status(400).json({ error: 'userId and email are required' })
+    // Block local/missing users — they'd pay but never get upgraded
+    if (!userId || !email || userId === 'local') {
+      return res.status(400).json({ error: 'Authenticated account required' })
+    }
+
+    // Verify user actually exists in Supabase before creating checkout
+    const { data: profile, error: profileErr } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('user_id', userId)
+      .single()
+
+    if (profileErr || !profile) {
+      return res.status(400).json({ error: 'User not found' })
     }
 
     const session = await stripe.checkout.sessions.create({
