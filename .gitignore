@@ -30,3 +30,13 @@ dist-ssr
 .DS_Store
 Thumbs.db
 .env*.local
+
+# Don't track these in the CNTEMUP repo
+claude-bridge/
+*.onnx
+*.prproj
+*.zip
+*.png
+!app/public/**/*.png
+phone.png
+cntemup-qr*.png
