@@ -129,7 +129,7 @@
         <div class="result-amount" id="result-amount">$5.00</div>
         <div class="result-detail" id="result-detail">100 containers × 5¢ each</div>
         <div class="result-breakdown" id="result-breakdown">
-          That's about 1 kitchen bag of crushed cans
+          That's about 1 kitchen bag of cans
         </div>
       </div>
     </div>
@@ -218,6 +218,7 @@
       <li style="margin: 0.5rem 0;">→ <a href="/how-many-cans-to-make-100">How Many Cans to Make $100?</a></li>
       <li style="margin: 0.5rem 0;">→ <a href="/bottle-deposit-near-me">Bottle Deposit Near Me — Where to Return</a></li>
       <li style="margin: 0.5rem 0;">→ <a href="/how-to-count-cans-fast">How to Count Cans Fast — Best Methods</a></li>
+      <li style="margin: 0.5rem 0;">→ <a href="/bottle-deposit-countries">Bottle Deposit Countries — Global Guide</a></li>
     </ul>
 
     <footer>
@@ -243,15 +244,15 @@
       amountEl.textContent = '$' + total;
       detailEl.textContent = count.toLocaleString() + ' containers × ' + cents + '¢ each';
 
-      // Bag estimate (crushed cans ~175 per kitchen bag)
+      // Bag estimate (~85 uncrushed cans per kitchen bag)
       if (count <= 0) {
         breakdownEl.textContent = 'Enter a number above to calculate';
-      } else if (count < 200) {
-        breakdownEl.textContent = 'About ' + Math.max(1, Math.round(count / 175)) + ' kitchen bag' + (count > 175 ? 's' : '') + ' of crushed cans';
-      } else if (count < 700) {
-        breakdownEl.textContent = 'About ' + Math.round(count / 600) + '-' + Math.round(count / 400) + ' large trash bags of crushed cans';
+      } else if (count < 100) {
+        breakdownEl.textContent = 'About ' + Math.max(1, Math.round(count / 85)) + ' kitchen bag of cans';
+      } else if (count < 400) {
+        breakdownEl.textContent = 'About ' + Math.round(count / 85) + ' kitchen bags of cans';
       } else {
-        breakdownEl.textContent = 'About ' + Math.round(count / 600) + ' large trash bags of crushed cans';
+        breakdownEl.textContent = 'About ' + Math.round(count / 350) + ' large trash bags of cans';
       }
     }
 
