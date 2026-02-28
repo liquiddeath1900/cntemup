@@ -63,22 +63,16 @@ claude mcp add sequential -- npx -y @anthropic-ai/sequential-thinking-mcp-server
 Then set the API keys:
 
 ```bash
-# Create/edit ~/.claude.json or use claude mcp add with env vars
-# These are your existing keys — enter them when prompted or add to config:
-
-# Brave Search: YOUR_BRAVE_KEY_HERE
-# Exa: YOUR_EXA_KEY_HERE
-# Firecrawl: YOUR_FIRECRAWL_KEY_HERE
-# Local Falcon: YOUR_LOCAL_FALCON_KEY_HERE
+# API keys are in the PRIVATE claude-bridge repo:
+# github.com/liquiddeath1900/claude-bridge → shared/api-keys.md
+# NEVER put keys in this public repo.
 ```
 
 **Optional but recommended:**
 ```bash
 claude mcp add supabase -- npx -y @supabase/mcp-server-supabase@latest
-# Token: YOUR_SUPABASE_TOKEN_HERE
-
 claude mcp add local-falcon -- npx -y mcp-remote https://mcp.localfalcon.com/sse
-# Token: YOUR_LOCAL_FALCON_KEY_HERE
+# See claude-bridge/shared/api-keys.md for tokens
 ```
 
 ---
