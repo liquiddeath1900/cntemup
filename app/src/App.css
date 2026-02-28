@@ -693,7 +693,7 @@ body {
   border-radius: 8px;
   color: var(--gb-screen-light);
   font-family: 'Press Start 2P', monospace;
-  font-size: var(--font-xs);
+  font-size: max(16px, var(--font-xs)); /* Prevents iOS Safari auto-zoom on focus */
   box-sizing: border-box;
 }
 

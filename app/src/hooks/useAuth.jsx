@@ -219,7 +219,10 @@ function useAuthInternal() {
       setError(null)
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: `${window.location.origin}/settings` },
+        options: {
+          redirectTo: `${window.location.origin}/settings`,
+          queryParams: { prompt: 'select_account' },
+        },
       })
       if (error) throw error
     } catch (err) {
