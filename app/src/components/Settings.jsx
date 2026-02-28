@@ -8,7 +8,7 @@ import { StateSelector } from './StateSelector'
 export function Settings() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { user, profile, signOut, isLocal, refreshProfile, updateAlertTarget, updateState } = useAuth()
+  const { user, profile, signOut, isLocal, refreshProfile, updateAlertTarget, updateState, signInWithGoogle } = useAuth()
   const { isPremium, alertTarget, subscriptionStatus, premiumSince } = usePremium(profile)
   const [alertInput, setAlertInput] = useState(alertTarget || '')
   const [showUpgradeSuccess, setShowUpgradeSuccess] = useState(false)
@@ -44,9 +44,9 @@ export function Settings() {
   }
 
   const handleUpgrade = async () => {
-    // Block local users — they must create an account first
+    // Local users → sign in with Google first (creates real account for Stripe)
     if (isLocal) {
-      navigate('/login')
+      await signInWithGoogle()
       return
     }
     setCheckoutLoading(true)
@@ -148,7 +148,7 @@ export function Settings() {
                 onClick={handleUpgrade}
                 disabled={checkoutLoading}
               >
-                {isLocal ? 'CREATE ACCOUNT TO GO PRO' : checkoutLoading ? 'LOADING...' : 'GO PRO — $2/MO'}
+                {isLocal ? 'SIGN IN WITH GOOGLE TO GO PRO' : checkoutLoading ? 'LOADING...' : 'GO PRO — $2/MO'}
               </button>
               <ul className="settings-pro-perks">
                 <li>See your money grow as you count</li>
@@ -201,6 +201,12 @@ export function Settings() {
               <span>DEPOSIT TIPS</span>
               <span>→</span>
             </a>
+            {user?.email === import.meta.env.VITE_ADMIN_EMAIL && (
+              <a href="/admin" className="settings-nav-link">
+                <span>ADMIN PANEL</span>
+                <span>→</span>
+              </a>
+            )}
           </div>
         </div>
 

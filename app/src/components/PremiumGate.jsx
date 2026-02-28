@@ -5,15 +5,15 @@ import { usePremium } from '../hooks/usePremium'
 // Wrapper — shows upgrade prompt for locked features
 export function PremiumGate({ children, feature = 'this feature' }) {
   const navigate = useNavigate()
-  const { user, profile, isLocal } = useAuth()
+  const { user, profile, isLocal, signInWithGoogle } = useAuth()
   const { isPremium } = usePremium(profile)
 
   if (isPremium) return children
 
   const handleUpgrade = async () => {
-    // Local users must create an account first
+    // Local users → sign in with Google first (creates real account for Stripe)
     if (isLocal) {
-      navigate('/login')
+      await signInWithGoogle()
       return
     }
     try {
@@ -38,11 +38,11 @@ export function PremiumGate({ children, feature = 'this feature' }) {
       <h3 className="premium-gate-title">PRO FEATURE</h3>
       <p className="premium-gate-text">
         {isLocal
-          ? 'Create an account to unlock Pro features'
+          ? 'Sign in with Google to unlock Pro features'
           : `Unlock ${feature} with CNTEM'UP Pro for just $2/mo`}
       </p>
       <button className="premium-gate-btn" onClick={handleUpgrade}>
-        {isLocal ? 'CREATE ACCOUNT' : 'GO PRO — $2/MO'}
+        {isLocal ? 'SIGN IN WITH GOOGLE' : 'GO PRO — $2/MO'}
       </button>
     </div>
   )

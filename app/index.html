@@ -112,7 +112,58 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Static SEO content — React hydrates over this on load -->
+      <div style="background:#0f380f;color:#9bbc0f;font-family:monospace;padding:2rem 1rem;min-height:100vh;">
+        <h1 style="text-align:center;font-size:2rem;">CNTEM'UP — Count Your Bottles & Cans with Your Phone Camera</h1>
+        <p style="text-align:center;max-width:600px;margin:1rem auto;line-height:1.6;">
+          Free bottle and can counting app. Prop your phone up, start the camera, and slide containers past the tripwire line. Each item that crosses gets counted automatically. Track your deposit refunds in real-time.
+        </p>
+
+        <section style="max-width:600px;margin:2rem auto;">
+          <h2>How It Works</h2>
+          <ol style="line-height:2;">
+            <li>Prop your phone facing a flat surface</li>
+            <li>Press START to activate the camera tripwire</li>
+            <li>Slide bottles and cans across the tripwire line</li>
+            <li>See your count and deposit value instantly</li>
+          </ol>
+        </section>
+
+        <section style="max-width:600px;margin:2rem auto;">
+          <h2>Bottle Deposit States</h2>
+          <p>Works in all 10 US bottle bill states: California, Connecticut, Hawaii, Iowa, Maine, Massachusetts, Michigan, New York, Oregon, and Vermont. Deposit values range from 5 to 15 cents per container.</p>
+        </section>
+
+        <section style="max-width:600px;margin:2rem auto;">
+          <h2>Features</h2>
+          <ul style="line-height:2;">
+            <li>Camera-based tripwire counting — no manual tapping</li>
+            <li>Real-time deposit value calculator</li>
+            <li>Works on any phone with a camera</li>
+            <li>No app download required — runs in your browser</li>
+            <li>Save and track counting sessions</li>
+            <li>State-specific deposit rates and rules</li>
+          </ul>
+        </section>
+
+        <p style="text-align:center;margin-top:2rem;">
+          <a href="/app" style="color:#9bbc0f;font-size:1.2rem;">Start Counting Now</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Noscript fallback for crawlers with JS disabled -->
+    <noscript>
+      <div style="background:#0f380f;color:#9bbc0f;font-family:monospace;padding:2rem;min-height:100vh;">
+        <h1>CNTEM'UP — Bottle & Can Counter App</h1>
+        <p>Count bottles and cans with your phone camera using tripwire detection. Track deposit refunds for New York, Michigan, California, and all bottle bill states.</p>
+        <h2>How many cans to make money?</h2>
+        <p>At 5 cents per can (NY, most states): 20 cans = $1, 200 cans = $10, 2000 cans = $100. Michigan pays 10 cents: 10 cans = $1, 100 cans = $10.</p>
+        <p>This app requires JavaScript. Please enable JavaScript to use CNTEM'UP.</p>
+      </div>
+    </noscript>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

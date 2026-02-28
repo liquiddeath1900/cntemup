@@ -2677,3 +2677,33 @@ body {
   .gb-action-btn { padding: 12px 28px; }
   .gb-dpad-row { gap: 28px; }
 }
+
+/* ===== ADMIN DASHBOARD ===== */
+.admin-table-scroll {
+  max-height: 400px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-name {
+  font-size: var(--font-xs) !important;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auth-hint {
+  font-size: 9px;
+  color: var(--gb-text-dim);
+  text-align: center;
+  margin: 4px 0 0;
+  letter-spacing: 0.05em;
+}
+
+.admin-user-detail {
+  font-size: 9px;
+  color: var(--gb-text-dim);
+  padding: 2px 12px 6px;
+  letter-spacing: 0.05em;
+}

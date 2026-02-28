@@ -17,7 +17,7 @@ export default defineConfig({
         name: "CNTEM'UP - Bottle Counter",
         short_name: "CNTEM'UP",
         description: 'Count bottles and cans in real-time using your camera',
-        theme_color: '#10b981',
+        theme_color: '#0f380f',
         background_color: '#0f172a',
         display: 'standalone',
         orientation: 'portrait',

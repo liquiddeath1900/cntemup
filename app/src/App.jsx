@@ -6,6 +6,7 @@ import { Auth } from './components/Auth'
 import { Settings } from './components/Settings'
 import { History } from './components/History'
 import { Tips } from './components/Tips'
+import { AdminPage } from './components/AdminPage'
 import { AlertModal } from './components/AlertModal'
 import { useCamera } from './hooks/useCamera'
 import { useTripwire } from './hooks/useTripwire'
@@ -327,6 +328,18 @@ function CounterPage() {
   )
 }
 
+// Admin route guard — checks email against env var
+function AdminRoute({ element }) {
+  const { user, loading } = useAuth()
+  const adminEmail = import.meta.env.VITE_ADMIN_EMAIL
+  if (loading) return null
+  if (!user || !adminEmail || user.email !== adminEmail) {
+    window.location.href = '/'
+    return null
+  }
+  return element
+}
+
 // Root app — routing
 function App() {
   const { user, loading, setupLocal } = useAuth()
@@ -359,6 +372,7 @@ function App() {
         <Route path="/login" element={<Auth />} />
         <Route path="/history" element={<History />} />
         <Route path="/tips" element={<Tips />} />
+        <Route path="/admin" element={<AdminRoute element={<AdminPage />} />} />
       </Routes>
     </BrowserRouter>
   )
