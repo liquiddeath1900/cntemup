@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useAdminStats } from '../hooks/useAdminStats'
 
@@ -11,7 +12,7 @@ export function AdminPage() {
       <div className="settings-page">
         <div className="settings-scanlines" />
         <header className="settings-header">
-          <a href="/settings" className="settings-back">&larr; BACK</a>
+          <Link to="/settings" className="settings-back">&larr; BACK</Link>
           <h1 className="settings-title">ADMIN</h1>
         </header>
         <main className="settings-main">
@@ -26,7 +27,7 @@ export function AdminPage() {
       <div className="settings-page">
         <div className="settings-scanlines" />
         <header className="settings-header">
-          <a href="/settings" className="settings-back">&larr; BACK</a>
+          <Link to="/settings" className="settings-back">&larr; BACK</Link>
           <h1 className="settings-title">ADMIN</h1>
         </header>
         <main className="settings-main">
@@ -41,7 +42,7 @@ export function AdminPage() {
       <div className="settings-scanlines" />
 
       <header className="settings-header">
-        <a href="/settings" className="settings-back">&larr; BACK</a>
+        <Link to="/settings" className="settings-back">&larr; BACK</Link>
         <h1 className="settings-title">ADMIN</h1>
       </header>
 

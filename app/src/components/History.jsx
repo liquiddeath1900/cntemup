@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { usePremium } from '../hooks/usePremium'
 import { useHistory } from '../hooks/useHistory'
@@ -16,7 +17,7 @@ export function History() {
       <div className="settings-scanlines" />
 
       <header className="settings-header">
-        <a href="/settings" className="settings-back">&larr; BACK</a>
+        <Link to="/settings" className="settings-back">&larr; BACK</Link>
         <h1 className="settings-title">HISTORY</h1>
       </header>
 

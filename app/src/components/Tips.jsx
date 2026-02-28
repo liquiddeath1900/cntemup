@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { GENERAL_TIPS, STATE_TIPS, NON_DEPOSIT_STATE_TIP } from '../data/depositTips'
 import { DEPOSIT_STATES } from '../data/stateRules'
@@ -21,7 +22,7 @@ export function Tips() {
       <div className="settings-scanlines" />
 
       <header className="settings-header">
-        <a href="/settings" className="settings-back">&larr; BACK</a>
+        <Link to="/settings" className="settings-back">&larr; BACK</Link>
         <h1 className="settings-title">TIPS</h1>
       </header>
 

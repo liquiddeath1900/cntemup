@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { usePremium } from '../hooks/usePremium'
 import { StateSelector } from './StateSelector'
@@ -86,7 +86,7 @@ export function Settings() {
       <div className="settings-scanlines" />
 
       <header className="settings-header">
-        <a href="/app" className="settings-back">&larr; BACK</a>
+        <Link to="/app" className="settings-back">&larr; BACK</Link>
         <h1 className="settings-title">SETTINGS</h1>
       </header>
 
@@ -192,19 +192,19 @@ export function Settings() {
         <div className="settings-section">
           <h2 className="settings-section-title">MORE</h2>
           <div className="settings-nav-links">
-            <a href="/history" className="settings-nav-link">
+            <Link to="/history" className="settings-nav-link">
               <span>HISTORY</span>
               <span>{isPremium ? '→' : 'PRO'}</span>
-            </a>
-            <a href="/tips" className="settings-nav-link">
+            </Link>
+            <Link to="/tips" className="settings-nav-link">
               <span>DEPOSIT TIPS</span>
               <span>→</span>
-            </a>
-            {user?.email === import.meta.env.VITE_ADMIN_EMAIL && (
-              <a href="/admin" className="settings-nav-link">
+            </Link>
+            {user?.email?.toLowerCase() === (import.meta.env.VITE_ADMIN_EMAIL || '').toLowerCase() && (
+              <Link to="/admin" className="settings-nav-link">
                 <span>ADMIN PANEL</span>
                 <span>→</span>
-              </a>
+              </Link>
             )}
           </div>
         </div>

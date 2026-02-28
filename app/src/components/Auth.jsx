@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { StateSelector } from './StateSelector'
 import { supabase, supabaseEnabled } from '../lib/supabase'
@@ -63,7 +63,7 @@ export function Auth() {
       <div className="settings-scanlines" />
 
       <header className="auth-header">
-        <a href="/" className="settings-back">&larr; HOME</a>
+        <Link to="/" className="settings-back">&larr; HOME</Link>
         <h1 className="auth-title">CNTEM'UP</h1>
         <p className="auth-tagline">Bottle & Can Counter</p>
       </header>
