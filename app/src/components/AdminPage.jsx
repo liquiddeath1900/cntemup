@@ -1,7 +1,7 @@
 import { useAuth } from '../hooks/useAuth'
 import { useAdminStats } from '../hooks/useAdminStats'
 
-// Admin dashboard — stats + recent signups
+// Admin dashboard — full visibility into all users
 export function AdminPage() {
   const { user } = useAuth()
   const { stats, loading, error, refresh } = useAdminStats(user?.email)
@@ -11,7 +11,7 @@ export function AdminPage() {
       <div className="settings-page">
         <div className="settings-scanlines" />
         <header className="settings-header">
-          <a href="/app" className="settings-back">&larr; BACK</a>
+          <a href="/settings" className="settings-back">&larr; BACK</a>
           <h1 className="settings-title">ADMIN</h1>
         </header>
         <main className="settings-main">
@@ -26,7 +26,7 @@ export function AdminPage() {
       <div className="settings-page">
         <div className="settings-scanlines" />
         <header className="settings-header">
-          <a href="/app" className="settings-back">&larr; BACK</a>
+          <a href="/settings" className="settings-back">&larr; BACK</a>
           <h1 className="settings-title">ADMIN</h1>
         </header>
         <main className="settings-main">
@@ -41,7 +41,7 @@ export function AdminPage() {
       <div className="settings-scanlines" />
 
       <header className="settings-header">
-        <a href="/app" className="settings-back">&larr; BACK</a>
+        <a href="/settings" className="settings-back">&larr; BACK</a>
         <h1 className="settings-title">ADMIN</h1>
       </header>
 
@@ -50,7 +50,7 @@ export function AdminPage() {
         <div className="history-summary">
           <div className="history-stat">
             <span className="history-stat-value">{stats.totalUsers}</span>
-            <span className="history-stat-label">USERS</span>
+            <span className="history-stat-label">ACCOUNTS</span>
           </div>
           <div className="history-stat">
             <span className="history-stat-value">{stats.premiumUsers}</span>
@@ -72,8 +72,8 @@ export function AdminPage() {
             <span className="history-stat-label">THIS MONTH</span>
           </div>
           <div className="history-stat">
-            <span className="history-stat-value">{stats.visitorCount}</span>
-            <span className="history-stat-label">VISITORS</span>
+            <span className="history-stat-value">{stats.totalSessions}</span>
+            <span className="history-stat-label">SESSIONS</span>
           </div>
         </div>
 
@@ -83,8 +83,12 @@ export function AdminPage() {
             <span className="history-stat-label">WAITLIST</span>
           </div>
           <div className="history-stat">
-            <span className="history-stat-value">{stats.totalSessions}</span>
-            <span className="history-stat-label">SESSIONS</span>
+            <span className="history-stat-value">{stats.visitorCount}</span>
+            <span className="history-stat-label">VISITORS</span>
+          </div>
+          <div className="history-stat">
+            <span className="history-stat-value">{(stats.authUsers || []).length}</span>
+            <span className="history-stat-label">GOOGLE</span>
           </div>
         </div>
 
@@ -95,12 +99,75 @@ export function AdminPage() {
           </button>
         </div>
 
-        {/* Recent signups table */}
+        {/* Google Auth Users (paid path) */}
         <div className="settings-section">
-          <h2 className="settings-section-title">RECENT SIGNUPS</h2>
+          <h2 className="settings-section-title">GOOGLE USERS</h2>
+          <div className="admin-table-scroll">
+            {(stats.authUsers || []).length === 0 ? (
+              <div className="history-empty"><p>No Google signups yet.</p></div>
+            ) : (
+              <div className="history-list">
+                {stats.authUsers.map((u) => {
+                  const date = new Date(u.created_at)
+                  const isPro = stats.recentSignups.find(s => s.user_id === u.id)?.is_premium
+                  return (
+                    <div key={u.id} className="history-item">
+                      <div className="history-item-row">
+                        <span className="history-item-date">
+                          {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                        <span className="history-item-count admin-name">{u.email}</span>
+                        <span className="history-item-value">
+                          {isPro ? 'PRO' : 'FREE'}
+                        </span>
+                      </div>
+                      <div className="admin-user-detail">
+                        {u.provider} · last: {u.last_sign_in ? new Date(u.last_sign_in).toLocaleDateString() : 'never'}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Waitlist Users (free name+email signups) */}
+        <div className="settings-section">
+          <h2 className="settings-section-title">WAITLIST SIGNUPS</h2>
+          <div className="admin-table-scroll">
+            {(stats.recentWaitlist || []).length === 0 ? (
+              <div className="history-empty"><p>No waitlist signups yet.</p></div>
+            ) : (
+              <div className="history-list">
+                {stats.recentWaitlist.map((u, i) => {
+                  const date = new Date(u.created_at)
+                  return (
+                    <div key={i} className="history-item">
+                      <div className="history-item-row">
+                        <span className="history-item-date">
+                          {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                        <span className="history-item-count admin-name">{u.name || '—'}</span>
+                        <span className="history-item-value admin-name">{u.email}</span>
+                      </div>
+                      <div className="admin-user-detail">
+                        {u.source || 'landing'}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Profile Users (Supabase profiles) */}
+        <div className="settings-section">
+          <h2 className="settings-section-title">ALL PROFILES</h2>
           <div className="admin-table-scroll">
             {stats.recentSignups.length === 0 ? (
-              <div className="history-empty"><p>No signups yet.</p></div>
+              <div className="history-empty"><p>No profiles yet.</p></div>
             ) : (
               <div className="history-list">
                 {stats.recentSignups.map((u) => {

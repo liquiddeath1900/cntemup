@@ -84,6 +84,30 @@ export default async function handler(req, res) {
       totalSessions = count || 0
     } catch {}
 
+    // Waitlist entries (name+email free signups) — last 50
+    let recentWaitlist = []
+    try {
+      const { data } = await supabase
+        .from('waitlist')
+        .select('name, email, source, created_at')
+        .order('created_at', { ascending: false })
+        .limit(50)
+      recentWaitlist = data || []
+    } catch {}
+
+    // Auth users from Supabase (Google sign-ins) — get emails via admin API
+    let authUsers = []
+    try {
+      const { data } = await supabase.auth.admin.listUsers({ perPage: 50 })
+      authUsers = (data?.users || []).map(u => ({
+        id: u.id,
+        email: u.email,
+        provider: u.app_metadata?.provider || 'email',
+        created_at: u.created_at,
+        last_sign_in: u.last_sign_in_at,
+      }))
+    } catch {}
+
     res.status(200).json({
       totalUsers: totalUsers || 0,
       premiumUsers: premiumUsers || 0,
@@ -94,6 +118,8 @@ export default async function handler(req, res) {
       waitlistCount,
       totalSessions,
       recentSignups: recentSignups || [],
+      recentWaitlist,
+      authUsers,
     })
   } catch (err) {
     console.error('Admin stats error:', err.message)

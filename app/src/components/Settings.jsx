@@ -39,7 +39,6 @@ export function Settings() {
 
   const handleSignOut = async () => {
     await signOut()
-    localStorage.removeItem('cntemup_profile')
     navigate('/')
   }
 
@@ -213,14 +212,24 @@ export function Settings() {
         {/* Manage subscription (pro only) */}
         {isPremium && profile?.stripe_customer_id && (
           <div className="settings-section">
-            <a
-              href={import.meta.env.VITE_STRIPE_BILLING_URL || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
               className="settings-manage-link"
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/create-portal-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customerId: profile.stripe_customer_id }),
+                  })
+                  const data = await res.json()
+                  if (data.url) window.location.href = data.url
+                } catch (err) {
+                  console.error('Portal error:', err)
+                }
+              }}
             >
               MANAGE SUBSCRIPTION
-            </a>
+            </button>
           </div>
         )}
 

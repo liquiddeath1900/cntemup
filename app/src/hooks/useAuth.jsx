@@ -33,6 +33,41 @@ export function useAuth() {
   return useAuthInternal()
 }
 
+// Helper — fetch or create Supabase profile for a user
+async function ensureProfile(userId, userMeta) {
+  // Try to fetch existing profile
+  const { data: existing } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .single()
+
+  if (existing) return existing
+
+  // Profile doesn't exist — create one from Google metadata
+  const newProfile = {
+    user_id: userId,
+    display_name: userMeta?.full_name || userMeta?.name || userMeta?.email?.split('@')[0] || 'Player',
+    full_name: userMeta?.full_name || userMeta?.name || '',
+    state_code: 'NY',
+    is_premium: false,
+    alert_target: 0,
+  }
+
+  const { data: created, error } = await supabase
+    .from('profiles')
+    .upsert(newProfile, { onConflict: 'user_id' })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('[Auth] Failed to create profile:', error.message)
+    return newProfile // Return local copy as fallback
+  }
+
+  return created
+}
+
 // Internal hook — the actual logic (only runs once inside AuthProvider)
 function useAuthInternal() {
   const [user, setUser] = useState(null)
@@ -131,6 +166,11 @@ function useAuthInternal() {
   }, [user])
 
   const signOut = useCallback(async () => {
+    // Clear everything — localStorage, state, Supabase session
+    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem('cntemup_user')
+    localStorage.removeItem('cntemup_sessions')
+    localStorage.removeItem('cntemup_waitlist')
     if (supabaseEnabled && supabase) {
       await supabase.auth.signOut()
     }
@@ -179,7 +219,7 @@ function useAuthInternal() {
       setError(null)
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin },
+        options: { redirectTo: `${window.location.origin}/settings` },
       })
       if (error) throw error
     } catch (err) {
@@ -206,9 +246,9 @@ function useAuthInternal() {
       const currentUser = session?.user ?? null
       if (currentUser) {
         setUser(currentUser)
-        // Await profile before clearing loading — prevents flash of non-premium state
-        const { data } = await supabase.from('profiles').select('*').eq('user_id', currentUser.id).single()
-        setProfile(data)
+        // Fetch or create profile — handles first-time Google signins
+        const profileData = await ensureProfile(currentUser.id, currentUser.user_metadata)
+        setProfile(profileData)
         setLoading(false)
       } else {
         // No Supabase session — fall back to local
@@ -224,12 +264,15 @@ function useAuthInternal() {
         const currentUser = session?.user ?? null
         if (currentUser) {
           setUser(currentUser)
-          const { data } = await supabase.from('profiles').select('*')
-            .eq('user_id', currentUser.id).single()
-          setProfile(data)
+          // Fetch or create profile — handles first-time Google signins
+          const profileData = await ensureProfile(currentUser.id, currentUser.user_metadata)
+          setProfile(profileData)
+        } else {
+          // User signed out — clear everything
+          setUser(null)
+          setProfile(null)
         }
-        // If no Supabase session, don't wipe local profile —
-        // local mode is already set up via initLocal/setupLocal
+        setLoading(false)
       }
     )
 
