@@ -1231,6 +1231,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
   padding: 14px 16px;
   background: rgba(155, 188, 15, 0.06);
   border: 2px solid var(--gb-screen-dark);
@@ -1239,6 +1240,7 @@ body {
   font-family: 'Press Start 2P', monospace;
   font-size: var(--font-xs);
   color: var(--gb-screen-light);
+  cursor: pointer;
   transition: border-color 0.15s;
 }
 

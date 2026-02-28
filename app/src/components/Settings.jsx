@@ -209,27 +209,30 @@ export function Settings() {
           </div>
         </div>
 
-        {/* Manage subscription (pro only) */}
+        {/* Manage subscription — as a nav link style */}
         {isPremium && profile?.stripe_customer_id && (
           <div className="settings-section">
-            <button
-              className="settings-manage-link"
-              onClick={async () => {
-                try {
-                  const res = await fetch('/api/create-portal-session', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ customerId: profile.stripe_customer_id }),
-                  })
-                  const data = await res.json()
-                  if (data.url) window.location.href = data.url
-                } catch (err) {
-                  console.error('Portal error:', err)
-                }
-              }}
-            >
-              MANAGE SUBSCRIPTION
-            </button>
+            <div className="settings-nav-links">
+              <button
+                className="settings-nav-link"
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/create-portal-session', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ customerId: profile.stripe_customer_id }),
+                    })
+                    const data = await res.json()
+                    if (data.url) window.location.href = data.url
+                  } catch (err) {
+                    console.error('Portal error:', err)
+                  }
+                }}
+              >
+                <span>MANAGE SUBSCRIPTION</span>
+                <span>→</span>
+              </button>
+            </div>
           </div>
         )}
 
