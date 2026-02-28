@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bottle Deposit Calculator — How Much Are Your Cans Worth? | CNTEM'UP</title>
+  <meta name="description" content="Free bottle deposit calculator. Enter your state and container count to see exactly how much your bottles and cans are worth. Works for all 10 US deposit states.">
+  <meta name="keywords" content="bottle deposit calculator, can deposit calculator, how much are my cans worth, bottle return value, recycling deposit calculator">
+  <link rel="canonical" href="https://cntemup.com/bottle-deposit-calculator">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://cntemup.com/bottle-deposit-calculator">
+  <meta property="og:title" content="Bottle Deposit Calculator — How Much Are Your Cans Worth?">
+  <meta property="og:description" content="Enter your state and container count to see exactly how much your bottles and cans are worth.">
+  <meta property="og:image" content="https://cntemup.com/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How much is a bottle deposit worth?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Bottle deposits range from 5 cents to 15 cents depending on your state. New York, California, Massachusetts, Iowa, and Hawaii charge 5 cents. Michigan, Oregon, and Connecticut charge 10 cents. Maine and Vermont charge 5-15 cents depending on container type."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How much are 100 cans worth in deposit?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "100 cans are worth $5.00 in 5-cent states (NY, CA, MA, IA, HI) and $10.00 in 10-cent states (MI, OR, CT). In Maine, 100 wine/liquor bottles at 15 cents each would be worth $15.00."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I calculate my bottle deposit refund?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Multiply your container count by your state's deposit rate. For example: 500 cans × $0.05 (New York) = $25.00. Or use the free calculator at cntemup.com/bottle-deposit-calculator to do the math automatically."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a1a0a; color: #e0e0e0; line-height: 1.7; }
+    .container { max-width: 720px; margin: 0 auto; padding: 2rem 1.25rem; }
+    .brand { text-align: center; margin-bottom: 2rem; }
+    .brand a { color: #9bbc0f; text-decoration: none; font-family: monospace; font-weight: bold; font-size: 1.5rem; }
+    .brand p { color: #5a8a3a; font-size: 0.875rem; margin-top: 0.25rem; }
+    h1 { font-size: 2rem; color: #9bbc0f; margin-bottom: 1rem; line-height: 1.3; }
+    h2 { font-size: 1.4rem; color: #9bbc0f; margin: 2rem 0 0.75rem; border-bottom: 2px solid #1a3a1a; padding-bottom: 0.5rem; }
+    h3 { font-size: 1.1rem; color: #7a9c2f; margin: 1.5rem 0 0.5rem; }
+    p { margin-bottom: 1rem; color: #c0c0c0; }
+    strong { color: #9bbc0f; }
+    a { color: #9bbc0f; }
+    .updated { font-size: 0.85rem; color: #5a8a3a; margin-bottom: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    th { background: #1a3a1a; color: #9bbc0f; padding: 12px; text-align: left; font-weight: 600; }
+    td { padding: 10px 12px; border-bottom: 1px solid #1a3a1a; }
+    tr:hover { background: rgba(155, 188, 15, 0.05); }
+    .highlight { color: #9bbc0f; font-weight: bold; }
+    .cta { background: #1a3a1a; border: 2px solid #9bbc0f; border-radius: 12px; padding: 2rem; text-align: center; margin: 2.5rem 0; }
+    .cta h3 { color: #9bbc0f; margin-bottom: 0.75rem; }
+    .cta a.btn { display: inline-block; background: #9bbc0f; color: #0a1a0a; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1rem; margin-top: 0.5rem; }
+    .cta a.btn:hover { background: #b0d020; }
+    .faq { margin: 1.5rem 0; }
+    .faq dt { font-weight: bold; color: #9bbc0f; margin-top: 1rem; }
+    .faq dd { margin: 0.5rem 0 1rem 0; color: #c0c0c0; }
+    footer { text-align: center; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #1a3a1a; color: #5a8a3a; font-size: 0.85rem; }
+    footer a { color: #5a8a3a; }
+
+    /* Calculator */
+    .calc { background: #0f2a0f; border: 2px solid #9bbc0f; border-radius: 16px; padding: 2rem; margin: 2rem 0; }
+    .calc label { display: block; font-size: 0.95rem; color: #9bbc0f; margin-bottom: 0.5rem; font-weight: 600; }
+    .calc select, .calc input[type="number"] {
+      width: 100%; padding: 14px; font-size: 1.1rem; border: 2px solid #1a3a1a; border-radius: 8px;
+      background: #0a1a0a; color: #9bbc0f; font-family: inherit; margin-bottom: 1.25rem;
+      -webkit-appearance: none; appearance: none;
+    }
+    .calc select:focus, .calc input:focus { border-color: #9bbc0f; outline: none; }
+    .calc select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239bbc0f' stroke-width='2' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; }
+    .result { background: #1a3a1a; border-radius: 12px; padding: 1.5rem; text-align: center; margin-top: 0.5rem; }
+    .result-amount { font-size: 3rem; color: #9bbc0f; font-weight: bold; line-height: 1.2; }
+    .result-detail { font-size: 0.9rem; color: #7a9c2f; margin-top: 0.5rem; }
+    .result-breakdown { margin-top: 1rem; font-size: 0.85rem; color: #c0c0c0; }
+
+    @media (max-width: 600px) { h1 { font-size: 1.5rem; } table { font-size: 0.85rem; } .result-amount { font-size: 2.25rem; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <a href="https://cntemup.com">CNTEM'UP</a>
+      <p>Bottle & Can Counter</p>
+    </div>
+
+    <h1>Bottle Deposit Calculator — How Much Are Your Cans Worth?</h1>
+    <p class="updated">Last updated: February 2026</p>
+
+    <p>Enter your state and how many containers you have. The calculator shows exactly how much your bottles and cans are worth in deposit refunds.</p>
+
+    <div class="calc">
+      <label for="state">Your State</label>
+      <select id="state">
+        <option value="0.05" data-state="NY">New York — 5¢</option>
+        <option value="0.10" data-state="MI">Michigan — 10¢</option>
+        <option value="0.10" data-state="OR">Oregon — 10¢</option>
+        <option value="0.10" data-state="CT">Connecticut — 10¢</option>
+        <option value="0.05" data-state="CA">California — 5¢ (under 24oz)</option>
+        <option value="0.05" data-state="MA">Massachusetts — 5¢</option>
+        <option value="0.05" data-state="ME">Maine — 5¢ (15¢ wine/liquor)</option>
+        <option value="0.05" data-state="VT">Vermont — 5¢ (15¢ wine/liquor)</option>
+        <option value="0.05" data-state="IA">Iowa — 5¢</option>
+        <option value="0.05" data-state="HI">Hawaii — 5¢</option>
+      </select>
+
+      <label for="count">Number of Containers</label>
+      <input type="number" id="count" min="0" max="100000" value="100" inputmode="numeric">
+
+      <div class="result">
+        <div class="result-amount" id="result-amount">$5.00</div>
+        <div class="result-detail" id="result-detail">100 containers × 5¢ each</div>
+        <div class="result-breakdown" id="result-breakdown">
+          That's about 1 kitchen bag of crushed cans
+        </div>
+      </div>
+    </div>
+
+    <h2>Quick Reference Table</h2>
+
+    <table>
+      <thead>
+        <tr><th>Containers</th><th>5¢ States</th><th>10¢ States</th><th>15¢ (ME/VT liquor)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>50</td><td>$2.50</td><td>$5.00</td><td>$7.50</td></tr>
+        <tr><td>100</td><td>$5.00</td><td>$10.00</td><td>$15.00</td></tr>
+        <tr><td>200</td><td>$10.00</td><td>$20.00</td><td>$30.00</td></tr>
+        <tr><td>500</td><td>$25.00</td><td>$50.00</td><td>$75.00</td></tr>
+        <tr><td>1,000</td><td class="highlight">$50.00</td><td class="highlight">$100.00</td><td class="highlight">$150.00</td></tr>
+        <tr><td>2,000</td><td class="highlight">$100.00</td><td class="highlight">$200.00</td><td class="highlight">$300.00</td></tr>
+        <tr><td>5,000</td><td>$250.00</td><td>$500.00</td><td>$750.00</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Deposit Rates by State</h2>
+
+    <table>
+      <thead>
+        <tr><th>State</th><th>Standard Rate</th><th>Special Rates</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>New York</td><td class="highlight">5¢</td><td>—</td></tr>
+        <tr><td>Michigan</td><td class="highlight">10¢</td><td>—</td></tr>
+        <tr><td>Oregon</td><td class="highlight">10¢</td><td>—</td></tr>
+        <tr><td>Connecticut</td><td class="highlight">10¢</td><td>—</td></tr>
+        <tr><td>California</td><td class="highlight">5¢</td><td>10¢ for 24oz+</td></tr>
+        <tr><td>Massachusetts</td><td class="highlight">5¢</td><td>—</td></tr>
+        <tr><td>Maine</td><td class="highlight">5¢</td><td>15¢ wine/liquor</td></tr>
+        <tr><td>Vermont</td><td class="highlight">5¢</td><td>15¢ liquor</td></tr>
+        <tr><td>Iowa</td><td class="highlight">5¢</td><td>—</td></tr>
+        <tr><td>Hawaii</td><td class="highlight">5¢</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <div class="cta">
+      <h3>Don't Want to Count by Hand?</h3>
+      <p>Use your phone camera to count bottles and cans automatically. Just slide them past the screen — CNTEM'UP counts every one.</p>
+      <a href="https://cntemup.com" class="btn">Count My Cans Free →</a>
+    </div>
+
+    <h2>How Deposits Work</h2>
+
+    <p>When you buy a beverage in a <a href="/bottle-deposit-states">bottle deposit state</a>, the store adds a small deposit (5-15¢) to the price. This deposit is <strong>fully refundable</strong> when you return the empty container to a <a href="/bottle-deposit-near-me">redemption location</a>.</p>
+
+    <p>The deposit is per container, not per ounce or per pound. A tiny 8oz soda can and a large 2-liter bottle each get the same deposit in most states. That means <strong>collecting smaller containers is more efficient</strong> — you get the same refund for less weight and space.</p>
+
+    <h2>Maximizing Your Earnings</h2>
+
+    <ul style="margin: 1rem 0 1.5rem 1.5rem; color: #c0c0c0;">
+      <li><strong>Count before you go</strong> — Use <a href="https://cntemup.com">CNTEM'UP</a> so you know your exact payout. Don't let a center undercount you.</li>
+      <li><strong>Focus on 10¢ states</strong> — Michigan, Oregon, and Connecticut pay double. If you're near a state border, redeem where rates are higher (with containers purchased in that state).</li>
+      <li><strong>Collect from events</strong> — Concerts, festivals, and sporting events generate hundreds of empties in one location.</li>
+      <li><strong>Build relationships</strong> — Ask local bars, restaurants, and apartment buildings if you can collect their empties regularly.</li>
+      <li><strong>Sort at home</strong> — Pre-sorted loads get processed faster at redemption centers. See our guide on <a href="/how-to-count-cans-fast">how to count cans fast</a>.</li>
+    </ul>
+
+    <h2>Frequently Asked Questions</h2>
+
+    <dl class="faq">
+      <dt>How much is a bottle deposit worth?</dt>
+      <dd>Deposits range from <strong>5¢ to 15¢</strong> depending on your state. NY, CA, MA, IA, and HI charge 5¢. MI, OR, and CT charge 10¢. Maine and Vermont charge up to 15¢ for wine and liquor bottles.</dd>
+
+      <dt>How much are 100 cans worth?</dt>
+      <dd><strong>$5.00</strong> in 5-cent states, <strong>$10.00</strong> in 10-cent states. In Maine, 100 wine/liquor bottles at 15¢ each = $15.00.</dd>
+
+      <dt>How do I calculate my bottle deposit refund?</dt>
+      <dd>Multiply your container count by your state's deposit rate. Example: 500 cans × $0.05 (New York) = $25.00. Or use the calculator at the top of this page.</dd>
+
+      <dt>Are all containers eligible for deposit refund?</dt>
+      <dd>No. Most states exclude milk, infant formula, meal replacement drinks, and containers over 1 gallon. Wine and liquor bottles are only covered in some states (Maine, Vermont, Oregon). Check your <a href="/bottle-deposit-states">state's specific rules</a>.</dd>
+
+      <dt>Can I get more than the deposit amount?</dt>
+      <dd>No — the deposit refund is fixed. However, aluminum cans also have scrap value (~$0.50/lb or about 1.5¢/can). In non-deposit states, scrap is your only option. In deposit states, always redeem for the deposit — it's 3-7x more than scrap value.</dd>
+    </dl>
+
+    <h2>Related Guides</h2>
+    <ul style="margin: 1rem 0; list-style: none;">
+      <li style="margin: 0.5rem 0;">→ <a href="/bottle-deposit-states">Bottle Deposit States 2026 — Complete Guide</a></li>
+      <li style="margin: 0.5rem 0;">→ <a href="/how-many-cans-to-make-100">How Many Cans to Make $100?</a></li>
+      <li style="margin: 0.5rem 0;">→ <a href="/bottle-deposit-near-me">Bottle Deposit Near Me — Where to Return</a></li>
+      <li style="margin: 0.5rem 0;">→ <a href="/how-to-count-cans-fast">How to Count Cans Fast — Best Methods</a></li>
+    </ul>
+
+    <footer>
+      <p><a href="https://cntemup.com">CNTEM'UP</a> — Free Bottle & Can Counter App</p>
+      <p>© 2026 CNTEM'UP. Built in NYC.</p>
+    </footer>
+  </div>
+
+  <script>
+    const stateEl = document.getElementById('state');
+    const countEl = document.getElementById('count');
+    const amountEl = document.getElementById('result-amount');
+    const detailEl = document.getElementById('result-detail');
+    const breakdownEl = document.getElementById('result-breakdown');
+
+    function calculate() {
+      const rate = parseFloat(stateEl.value);
+      const count = parseInt(countEl.value) || 0;
+      const total = (count * rate).toFixed(2);
+      const cents = Math.round(rate * 100);
+      const stateName = stateEl.options[stateEl.selectedIndex].dataset.state;
+
+      amountEl.textContent = '$' + total;
+      detailEl.textContent = count.toLocaleString() + ' containers × ' + cents + '¢ each';
+
+      // Bag estimate (crushed cans ~175 per kitchen bag)
+      if (count <= 0) {
+        breakdownEl.textContent = 'Enter a number above to calculate';
+      } else if (count < 200) {
+        breakdownEl.textContent = 'About ' + Math.max(1, Math.round(count / 175)) + ' kitchen bag' + (count > 175 ? 's' : '') + ' of crushed cans';
+      } else if (count < 700) {
+        breakdownEl.textContent = 'About ' + Math.round(count / 600) + '-' + Math.round(count / 400) + ' large trash bags of crushed cans';
+      } else {
+        breakdownEl.textContent = 'About ' + Math.round(count / 600) + ' large trash bags of crushed cans';
+      }
+    }
+
+    stateEl.addEventListener('change', calculate);
+    countEl.addEventListener('input', calculate);
+    calculate();
+  </script>
+</body>
+</html>

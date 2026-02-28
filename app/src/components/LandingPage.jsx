@@ -316,8 +316,10 @@ export function LandingPage() {
 
       <footer className="landing-footer">
         <div className="landing-footer-links">
-          <a href="/bottle-deposit-states">Deposit States Guide</a>
-          <a href="/how-many-cans-to-make-100">Earnings Calculator</a>
+          <a href="/bottle-deposit-states">Deposit States</a>
+          <a href="/bottle-deposit-calculator">Calculator</a>
+          <a href="/bottle-deposit-near-me">Near Me</a>
+          <a href="/how-to-count-cans-fast">Counting Guide</a>
         </div>
         <p>CNTEM'UP © 2026</p>
         <p>BUILT IN NYC</p>
