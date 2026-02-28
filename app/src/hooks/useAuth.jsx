@@ -166,14 +166,31 @@ function useAuthInternal() {
   }, [user])
 
   const signOut = useCallback(async () => {
-    // Clear everything — localStorage, state, Supabase session
+    // Clear app data
     localStorage.removeItem(STORAGE_KEY)
     localStorage.removeItem('cntemup_user')
     localStorage.removeItem('cntemup_sessions')
     localStorage.removeItem('cntemup_waitlist')
+
+    // Nuke Supabase session keys so we're clean even if signOut hangs
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        localStorage.removeItem(key)
+      }
+    })
+
+    // Race signOut against 2s timeout — storage already cleared so it's safe
     if (supabaseEnabled && supabase) {
-      await supabase.auth.signOut()
+      try {
+        await Promise.race([
+          supabase.auth.signOut(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000)),
+        ])
+      } catch {
+        // Timeout or error — session keys already nuked, safe to proceed
+      }
     }
+
     setUser(null)
     setProfile(null)
   }, [])

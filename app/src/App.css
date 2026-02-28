@@ -469,7 +469,7 @@ body {
   font-size: var(--font-xs);
   background: none;
   border: none;
-  color: #777;
+  color: var(--gb-text-dim);
   cursor: pointer;
   padding: 4px 8px;
 }
@@ -539,7 +539,7 @@ body {
 .loading-screen p {
   font-family: 'Press Start 2P', monospace;
   font-size: var(--font-xs);
-  color: #777;
+  color: var(--gb-text-dim);
   animation: gbBlink 1s step-end infinite;
 }
 
@@ -617,7 +617,7 @@ body {
 .gb-footer p {
   font-family: 'Press Start 2P', monospace;
   font-size: var(--font-xs);
-  color: #777;
+  color: var(--gb-text-dim);
 }
 
 /* ===== AUTH PAGE ===== */
@@ -2703,9 +2703,36 @@ body {
   letter-spacing: 0.05em;
 }
 
+.admin-expanded {
+  max-width: none !important;
+  white-space: normal !important;
+  word-break: break-all;
+}
+
 .admin-user-detail {
   font-size: 9px;
   color: var(--gb-text-dim);
   padding: 2px 12px 6px;
   letter-spacing: 0.05em;
+  line-height: 1.8;
+}
+
+/* ===== DESKTOP LAYOUT ===== */
+@media (min-width: 768px) {
+  .settings-page {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .admin-name {
+    max-width: 240px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .settings-page {
+    max-width: 800px;
+  }
+  .admin-name {
+    max-width: 360px;
+  }
 }

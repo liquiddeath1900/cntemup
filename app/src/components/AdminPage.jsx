@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useAdminStats } from '../hooks/useAdminStats'
@@ -6,6 +7,9 @@ import { useAdminStats } from '../hooks/useAdminStats'
 export function AdminPage() {
   const { user } = useAuth()
   const { stats, loading, error, refresh } = useAdminStats(user?.email)
+  const [expandedId, setExpandedId] = useState(null)
+
+  const toggle = (id) => setExpandedId(prev => prev === id ? null : id)
 
   if (loading) {
     return (
@@ -111,20 +115,31 @@ export function AdminPage() {
                 {stats.authUsers.map((u) => {
                   const date = new Date(u.created_at)
                   const isPro = stats.recentSignups.find(s => s.user_id === u.id)?.is_premium
+                  const isOpen = expandedId === `auth-${u.id}`
                   return (
-                    <div key={u.id} className="history-item">
+                    <div key={u.id} className="history-item" onClick={() => toggle(`auth-${u.id}`)} style={{ cursor: 'pointer' }}>
                       <div className="history-item-row">
                         <span className="history-item-date">
                           {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </span>
-                        <span className="history-item-count admin-name">{u.email}</span>
+                        <span className={`history-item-count admin-name${isOpen ? ' admin-expanded' : ''}`}>{u.email}</span>
                         <span className="history-item-value">
                           {isPro ? 'PRO' : 'FREE'}
                         </span>
                       </div>
-                      <div className="admin-user-detail">
-                        {u.provider} · last: {u.last_sign_in ? new Date(u.last_sign_in).toLocaleDateString() : 'never'}
-                      </div>
+                      {isOpen ? (
+                        <div className="admin-user-detail">
+                          <div>{u.email}</div>
+                          <div>ID: {u.id}</div>
+                          <div>Provider: {u.provider}</div>
+                          <div>Created: {new Date(u.created_at).toLocaleString()}</div>
+                          <div>Last sign-in: {u.last_sign_in ? new Date(u.last_sign_in).toLocaleString() : 'never'}</div>
+                        </div>
+                      ) : (
+                        <div className="admin-user-detail">
+                          {u.provider} · last: {u.last_sign_in ? new Date(u.last_sign_in).toLocaleDateString() : 'never'}
+                        </div>
+                      )}
                     </div>
                   )
                 })}
@@ -143,18 +158,28 @@ export function AdminPage() {
               <div className="history-list">
                 {stats.recentWaitlist.map((u, i) => {
                   const date = new Date(u.created_at)
+                  const isOpen = expandedId === `wait-${i}`
                   return (
-                    <div key={i} className="history-item">
+                    <div key={i} className="history-item" onClick={() => toggle(`wait-${i}`)} style={{ cursor: 'pointer' }}>
                       <div className="history-item-row">
                         <span className="history-item-date">
                           {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </span>
-                        <span className="history-item-count admin-name">{u.name || '—'}</span>
-                        <span className="history-item-value admin-name">{u.email}</span>
+                        <span className={`history-item-count admin-name${isOpen ? ' admin-expanded' : ''}`}>{u.name || '—'}</span>
+                        <span className={`history-item-value admin-name${isOpen ? ' admin-expanded' : ''}`}>{u.email}</span>
                       </div>
-                      <div className="admin-user-detail">
-                        {u.source || 'landing'}
-                      </div>
+                      {isOpen ? (
+                        <div className="admin-user-detail">
+                          <div>Name: {u.name || '—'}</div>
+                          <div>Email: {u.email}</div>
+                          <div>Source: {u.source || 'landing'}</div>
+                          <div>Created: {new Date(u.created_at).toLocaleString()}</div>
+                        </div>
+                      ) : (
+                        <div className="admin-user-detail">
+                          {u.source || 'landing'}
+                        </div>
+                      )}
                     </div>
                   )
                 })}
@@ -174,20 +199,32 @@ export function AdminPage() {
                 {stats.recentSignups.map((u) => {
                   const date = new Date(u.created_at)
                   const name = u.full_name || u.display_name || 'Unknown'
+                  const isOpen = expandedId === `prof-${u.user_id}`
                   return (
-                    <div key={u.user_id} className="history-item">
+                    <div key={u.user_id} className="history-item" onClick={() => toggle(`prof-${u.user_id}`)} style={{ cursor: 'pointer' }}>
                       <div className="history-item-row">
                         <span className="history-item-date">
                           {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </span>
-                        <span className="history-item-count admin-name">{name}</span>
+                        <span className={`history-item-count admin-name${isOpen ? ' admin-expanded' : ''}`}>{name}</span>
                         <span className="history-item-value">
                           {u.is_premium ? 'PRO' : 'FREE'}
                         </span>
                       </div>
-                      <div className="admin-user-detail">
-                        {u.state_code || '—'} · {u.subscription_status || 'none'}
-                      </div>
+                      {isOpen ? (
+                        <div className="admin-user-detail">
+                          <div>Name: {name}</div>
+                          <div>ID: {u.user_id}</div>
+                          <div>State: {u.state_code || '—'}</div>
+                          <div>Status: {u.subscription_status || 'none'}</div>
+                          <div>Premium: {u.is_premium ? 'YES' : 'NO'}</div>
+                          <div>Created: {new Date(u.created_at).toLocaleString()}</div>
+                        </div>
+                      ) : (
+                        <div className="admin-user-detail">
+                          {u.state_code || '—'} · {u.subscription_status || 'none'}
+                        </div>
+                      )}
                     </div>
                   )
                 })}
