@@ -38,8 +38,13 @@ export function Settings() {
   }, [searchParams, refreshProfile])
 
   const handleSignOut = async () => {
-    await signOut()
-    navigate('/')
+    try {
+      await signOut()
+    } catch (err) {
+      console.error('Sign out error:', err)
+    }
+    // Force hard navigation to clear all state
+    window.location.href = '/'
   }
 
   const handleUpgrade = async () => {
