@@ -4,12 +4,13 @@ import { useAuth } from '../hooks/useAuth'
 import { usePremium } from '../hooks/usePremium'
 import { StateSelector } from './StateSelector'
 import { supabase } from '../lib/supabase'
+import { getRank } from '../lib/ranks'
 
 // Settings page — plan status, upgrade, alerts, navigation
 export function Settings() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { user, profile, signOut, isLocal, refreshProfile, updateAlertTarget, updateState, signInWithGoogle } = useAuth()
+  const { user, profile, signOut, isLocal, refreshProfile, updateAlertTarget, updateState, signInWithGoogle, updateLeaderboardVisibility } = useAuth()
   const { isPremium, alertTarget, subscriptionStatus, premiumSince } = usePremium(profile)
   const [alertInput, setAlertInput] = useState(alertTarget || '')
   const [showUpgradeSuccess, setShowUpgradeSuccess] = useState(false)
@@ -106,10 +107,10 @@ export function Settings() {
           </div>
         )}
 
-        {/* Profile card */}
+        {/* Profile card — with rank badge */}
         <div className="settings-profile-card">
           <div className="settings-profile-icon">
-            {isPremium ? '⭐' : '👾'}
+            {getRank(0).badge}
           </div>
           <div className="settings-profile-info">
             <span className="settings-profile-name">
@@ -196,10 +197,33 @@ export function Settings() {
           </div>
         )}
 
+        {/* Leaderboard opt-in */}
+        <div className="settings-section">
+          <h2 className="settings-section-title">LEADERBOARD</h2>
+          <div className="leaderboard-toggle-row">
+            <span className="leaderboard-toggle-label">Show me on the board</span>
+            <button
+              className={`leaderboard-toggle ${profile?.show_on_leaderboard ? 'leaderboard-toggle-on' : ''}`}
+              onClick={() => updateLeaderboardVisibility(!profile?.show_on_leaderboard)}
+            >
+              {profile?.show_on_leaderboard ? 'ON' : 'OFF'}
+            </button>
+          </div>
+          {isLocal && (
+            <p className="settings-section-desc" style={{ marginTop: '8px' }}>
+              Sign in with Google to appear on the leaderboard
+            </p>
+          )}
+        </div>
+
         {/* Navigation links */}
         <div className="settings-section">
           <h2 className="settings-section-title">MORE</h2>
           <div className="settings-nav-links">
+            <Link to="/leaderboard" className="settings-nav-link">
+              <span>LEADERBOARD</span>
+              <span>→</span>
+            </Link>
             <Link to="/history" className="settings-nav-link">
               <span>HISTORY</span>
               <span>{isPremium ? '→' : 'PRO'}</span>

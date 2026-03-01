@@ -38,7 +38,7 @@ async function ensureProfile(userId, userMeta) {
   // Try to fetch existing profile
   const { data: existing } = await supabase
     .from('profiles')
-    .select('user_id, display_name, full_name, state_code, is_premium, subscription_status, alert_target, created_at, updated_at')
+    .select('user_id, display_name, full_name, state_code, is_premium, subscription_status, alert_target, show_on_leaderboard, created_at, updated_at')
     .eq('user_id', userId)
     .single()
 
@@ -158,7 +158,7 @@ function useAuthInternal() {
     if (!supabaseEnabled || !user || user.id === 'local') return null
     const { data } = await supabase
       .from('profiles')
-      .select('user_id, display_name, full_name, state_code, is_premium, subscription_status, alert_target, created_at, updated_at')
+      .select('user_id, display_name, full_name, state_code, is_premium, subscription_status, alert_target, show_on_leaderboard, created_at, updated_at')
       .eq('user_id', user.id)
       .single()
     if (data) setProfile(data)
@@ -299,6 +299,29 @@ function useAuthInternal() {
     return () => subscription.unsubscribe()
   }, [initLocal])
 
+  const updateLeaderboardVisibility = useCallback(async (visible) => {
+    if (supabaseEnabled && user?.id !== 'local') {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .update({ show_on_leaderboard: visible, updated_at: new Date().toISOString() })
+          .eq('user_id', user.id)
+          .select()
+          .single()
+        if (error) throw error
+        setProfile(data)
+      } catch (err) {
+        setError(err.message)
+      }
+    } else {
+      setProfile(prev => {
+        const updated = { ...prev, show_on_leaderboard: visible, updated_at: new Date().toISOString() }
+        saveLocalProfile(updated)
+        return updated
+      })
+    }
+  }, [user])
+
   return {
     user,
     profile,
@@ -313,5 +336,6 @@ function useAuthInternal() {
     refreshProfile,
     updateState,
     updateAlertTarget,
+    updateLeaderboardVisibility,
   }
 }

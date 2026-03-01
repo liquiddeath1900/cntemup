@@ -7,13 +7,17 @@ import { Settings } from './components/Settings'
 import { History } from './components/History'
 import { Tips } from './components/Tips'
 import { AdminPage } from './components/AdminPage'
+import { Leaderboard } from './components/Leaderboard'
 import { AlertModal } from './components/AlertModal'
+import { RankUpModal } from './components/RankUpModal'
 import { useCamera } from './hooks/useCamera'
 import { useTripwire } from './hooks/useTripwire'
 import { useAuth } from './hooks/useAuth'
 import { useDepositRules } from './hooks/useDepositRules'
 import { useSound } from './hooks/useSound'
 import { usePremium } from './hooks/usePremium'
+import { useHistory } from './hooks/useHistory'
+import { getRank } from './lib/ranks'
 import { supabase, supabaseEnabled } from './lib/supabase'
 import './App.css'
 
@@ -50,10 +54,13 @@ function CounterPage() {
   const [isDragging, setIsDragging] = useState(false)
   const [showAlertModal, setShowAlertModal] = useState(false)
   const [alertFired, setAlertFired] = useState(false)
+  const [rankUpInfo, setRankUpInfo] = useState(null)
   const cameraContainerRef = useRef(null)
 
-  const { user, profile } = useAuth()
+  const { user, profile, isLocal } = useAuth()
   const { isPremium, alertTarget } = usePremium(profile)
+  const { stats: historyStats } = useHistory(user?.id, isLocal)
+  const myRank = getRank(historyStats?.totalBottles || 0)
   const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code)
   const { muted, toggleMute, playCount, playAlarm, playBoot } = useSound()
   const { videoRef, isStreaming, videoReady, error: cameraError, debugLog, devices, startCamera, stopCamera, switchCamera, handleTapToPlay } = useCamera()
@@ -129,8 +136,20 @@ function CounterPage() {
     if (!user || sessionCount === 0) return
     setSavingSession(true)
     try {
+      // Check rank before save
+      const prevTotal = historyStats?.totalBottles || 0
+      const prevRank = getRank(prevTotal)
+
       const depositValue = calculateDeposit(sessionCount)
       await saveSession(user.id, sessionCount, depositValue, profile?.state_code || 'NY')
+
+      // Check if rank changed after adding this session's count
+      const newTotal = prevTotal + sessionCount
+      const newRank = getRank(newTotal)
+      if (newRank.name !== prevRank.name) {
+        setRankUpInfo(newRank)
+      }
+
       handleClearSession()
     } catch (err) {
       console.error('Save session error:', err)
@@ -184,6 +203,11 @@ function CounterPage() {
 
   return (
     <div className="app">
+      {/* Rank-up modal */}
+      {rankUpInfo && (
+        <RankUpModal newRank={rankUpInfo} onClose={() => setRankUpInfo(null)} />
+      )}
+
       {/* Alert modal */}
       {showAlertModal && (
         <AlertModal
@@ -204,7 +228,10 @@ function CounterPage() {
             {muted ? '🔇' : '🔊'}
           </button>
           <h1>CNTEM'UP{isPremium && <span className="pro-badge">PRO</span>}</h1>
-          <a href="/settings" className="settings-link">SET</a>
+          <div className="header-right">
+            <span className="rank-badge-mini" style={{ color: myRank.color }}>{myRank.badge}</span>
+            <a href="/settings" className="settings-link">SET</a>
+          </div>
         </div>
         <p>Bottle & Can Counter</p>
       </div>
@@ -372,6 +399,7 @@ function App() {
         <Route path="/login" element={<Auth />} />
         <Route path="/history" element={<History />} />
         <Route path="/tips" element={<Tips />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/admin" element={<AdminRoute element={<AdminPage />} />} />
       </Routes>
     </BrowserRouter>

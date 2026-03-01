@@ -224,6 +224,34 @@ export function LandingPage() {
           <p className="setup-tip">See your deposit value in real time. Save your session. Take your bags to the redemption center and collect.</p>
         </div>
 
+        <div className="setup-card">
+          <div className="setup-card-header">
+            <span className="setup-card-num">STEP 5</span>
+            <span className="setup-card-title">RANK UP</span>
+          </div>
+          <div className="setup-diagram">
+            <div className="setup-payout">
+              <div className="setup-payout-row">
+                <span className="setup-payout-label">🥫 ROOKIE</span>
+                <span className="setup-payout-value">0+</span>
+              </div>
+              <div className="setup-payout-row">
+                <span className="setup-payout-label">🥉 BRONZE</span>
+                <span className="setup-payout-value">500+</span>
+              </div>
+              <div className="setup-payout-row">
+                <span className="setup-payout-label">🥇 GOLD</span>
+                <span className="setup-payout-value">3,000+</span>
+              </div>
+              <div className="setup-payout-row">
+                <span className="setup-payout-label">🔥 MASTER</span>
+                <span className="setup-payout-value setup-payout-money">25,000+</span>
+              </div>
+            </div>
+          </div>
+          <p className="setup-tip">Every bottle you count earns you rank. Climb from Rookie to Master and compete on the <strong>global leaderboard</strong>. Every bottle counted = one less in a landfill.</p>
+        </div>
+
         <div className="setup-protips">
           <h3 className="setup-protips-title">PRO TIPS</h3>
           <div className="setup-protip">
