@@ -6,7 +6,7 @@ import { useAdminStats } from '../hooks/useAdminStats'
 // Admin dashboard — full visibility into all users
 export function AdminPage() {
   const { user } = useAuth()
-  const { stats, loading, error, refresh } = useAdminStats(user?.email)
+  const { stats, loading, error, refresh } = useAdminStats()
   const [expandedId, setExpandedId] = useState(null)
 
   const toggle = (id) => setExpandedId(prev => prev === id ? null : id)

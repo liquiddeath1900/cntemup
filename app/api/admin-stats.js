@@ -1,22 +1,32 @@
 // Vercel Serverless Function — Admin Stats API
-// GET /api/admin-stats?email=admin@example.com
+// GET /api/admin-stats (requires Bearer token from admin user)
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
-  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.VITE_ADMIN_EMAIL
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  // Auth check — verify admin email
-  const email = req.query.email
-  if (!email || email !== ADMIN_EMAIL) {
+  // JWT auth — verify caller identity from Supabase access token
+  const authHeader = req.headers.authorization
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+  const token = authHeader.split(' ')[1]
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+  if (authError || !user) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+
+  // Admin check — verified email must match server-side ADMIN_EMAIL
+  if (!ADMIN_EMAIL || user.email !== ADMIN_EMAIL) {
     return res.status(403).json({ error: 'Forbidden' })
   }
 
@@ -123,6 +133,6 @@ export default async function handler(req, res) {
     })
   } catch (err) {
     console.error('Admin stats error:', err.message)
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Internal server error' })
   }
 }

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { usePremium } from '../hooks/usePremium'
 import { StateSelector } from './StateSelector'
+import { supabase } from '../lib/supabase'
 
 // Settings page — plan status, upgrade, alerts, navigation
 export function Settings() {
@@ -55,13 +56,15 @@ export function Settings() {
     }
     setCheckoutLoading(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
       const res = await fetch('/api/create-checkout-session', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          email: user.email,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
       })
       const data = await res.json()
       if (data.url) {
@@ -215,17 +218,22 @@ export function Settings() {
         </div>
 
         {/* Manage subscription — as a nav link style */}
-        {isPremium && profile?.stripe_customer_id && (
+        {isPremium && (
           <div className="settings-section">
             <div className="settings-nav-links">
               <button
                 className="settings-nav-link"
                 onClick={async () => {
                   try {
+                    const { data: { session: authSession } } = await supabase.auth.getSession()
+                    const token = authSession?.access_token
                     const res = await fetch('/api/create-portal-session', {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ customerId: profile.stripe_customer_id }),
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({}),
                     })
                     const data = await res.json()
                     if (data.url) window.location.href = data.url
