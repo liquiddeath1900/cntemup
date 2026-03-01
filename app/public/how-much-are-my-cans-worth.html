@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How Much Are My Cans Worth? Free Calculator by State | CNTEM'UP</title>
+  <meta name="description" content="Find out exactly how much your cans and bottles are worth. Interactive calculator for all 10 bottle deposit states plus scrap aluminum value. Enter your count and state to see your earnings.">
+  <meta name="keywords" content="how much are my cans worth, can value calculator, bottle return calculator, aluminum can value, how much is a can worth, bottle deposit calculator by state, crv calculator">
+  <link rel="canonical" href="https://cntemup.com/how-much-are-my-cans-worth">
+
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://cntemup.com/how-much-are-my-cans-worth">
+  <meta property="og:title" content="How Much Are My Cans Worth? Free Calculator">
+  <meta property="og:description" content="Enter your can count and state to instantly see how much your bottles and cans are worth — deposit value and scrap value.">
+  <meta property="og:image" content="https://cntemup.com/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How much are my cans worth?",
+        "acceptedAnswer": {"@type": "Answer", "text": "It depends on your state. In 10-cent deposit states (Michigan, Oregon, Connecticut), each can is worth 10 cents. In 5-cent states (New York, California, Massachusetts, Iowa, Hawaii), each can is worth 5 cents. California pays 10 cents for containers 24oz and over. For scrap aluminum, cans are worth about $0.02 each (roughly $0.50-0.60 per pound)."}
+      },
+      {
+        "@type": "Question",
+        "name": "How much is 1000 cans worth?",
+        "acceptedAnswer": {"@type": "Answer", "text": "1,000 cans is worth $100 in 10-cent states (Michigan, Oregon, Connecticut), $50 in 5-cent states (New York, Massachusetts, Iowa, Hawaii), or about $18-20 as scrap aluminum in non-deposit states."}
+      },
+      {
+        "@type": "Question",
+        "name": "Is it better to return cans for deposit or sell as scrap?",
+        "acceptedAnswer": {"@type": "Answer", "text": "Always return for deposit if your state has a bottle bill. A 5-cent deposit is worth about 2.5x more than scrap value, and a 10-cent deposit is worth about 5x more. Only sell as scrap if you live in a state without a bottle deposit law."}
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a1a0a; color: #e0e0e0; line-height: 1.7; }
+    .container { max-width: 720px; margin: 0 auto; padding: 2rem 1.25rem; }
+    .brand { text-align: center; margin-bottom: 2rem; }
+    .brand a { color: #9bbc0f; text-decoration: none; font-family: monospace; font-weight: bold; font-size: 1.5rem; }
+    .brand p { color: #5a8a3a; font-size: 0.875rem; margin-top: 0.25rem; }
+    h1 { font-size: 2rem; color: #9bbc0f; margin-bottom: 1rem; line-height: 1.3; }
+    h2 { font-size: 1.4rem; color: #9bbc0f; margin: 2rem 0 0.75rem; border-bottom: 2px solid #1a3a1a; padding-bottom: 0.5rem; }
+    h3 { font-size: 1.1rem; color: #7a9c2f; margin: 1.5rem 0 0.5rem; }
+    p { margin-bottom: 1rem; color: #c0c0c0; }
+    strong { color: #9bbc0f; }
+    a { color: #9bbc0f; }
+    .updated { font-size: 0.85rem; color: #5a8a3a; margin-bottom: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    th { background: #1a3a1a; color: #9bbc0f; padding: 12px; text-align: left; font-weight: 600; }
+    td { padding: 10px 12px; border-bottom: 1px solid #1a3a1a; }
+    tr:hover { background: rgba(155, 188, 15, 0.05); }
+    .highlight { color: #9bbc0f; font-weight: bold; }
+    .cta { background: #1a3a1a; border: 2px solid #9bbc0f; border-radius: 12px; padding: 2rem; text-align: center; margin: 2.5rem 0; }
+    .cta h3 { color: #9bbc0f; margin-bottom: 0.75rem; }
+    .cta a.btn { display: inline-block; background: #9bbc0f; color: #0a1a0a; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1rem; margin-top: 0.5rem; }
+    .cta a.btn:hover { background: #b0d020; }
+    .faq { margin: 1.5rem 0; }
+    .faq dt { font-weight: bold; color: #9bbc0f; margin-top: 1rem; }
+    .faq dd { margin: 0.5rem 0 1rem 0; color: #c0c0c0; }
+    .tip { background: rgba(155, 188, 15, 0.08); border-radius: 8px; padding: 1rem 1.25rem; margin: 1rem 0; font-size: 0.95rem; }
+    footer { text-align: center; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #1a3a1a; color: #5a8a3a; font-size: 0.85rem; }
+    footer a { color: #5a8a3a; }
+
+    /* Calculator styles */
+    .calc-box { background: #0d220d; border: 2px solid #9bbc0f; border-radius: 12px; padding: 1.5rem; margin: 2rem 0; }
+    .calc-box label { display: block; color: #9bbc0f; font-weight: bold; margin-bottom: 0.5rem; font-size: 0.95rem; }
+    .calc-box select, .calc-box input[type="number"] {
+      width: 100%; padding: 12px; border: 1px solid #1a3a1a; border-radius: 8px;
+      background: #0a1a0a; color: #e0e0e0; font-size: 1rem; margin-bottom: 1rem;
+      -webkit-appearance: none; appearance: none;
+    }
+    .calc-box select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239bbc0f' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+    .calc-box input[type="number"]:focus, .calc-box select:focus { outline: none; border-color: #9bbc0f; }
+    .calc-result { background: #1a3a1a; border-radius: 8px; padding: 1.25rem; text-align: center; margin-top: 0.5rem; }
+    .calc-result .amount { font-size: 2.5rem; font-family: monospace; color: #9bbc0f; font-weight: bold; }
+    .calc-result .detail { color: #5a8a3a; font-size: 0.85rem; margin-top: 0.5rem; }
+    .calc-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+    .calc-compare .comp { background: rgba(155, 188, 15, 0.05); border-radius: 8px; padding: 1rem; text-align: center; }
+    .calc-compare .comp-label { font-size: 0.8rem; color: #5a8a3a; }
+    .calc-compare .comp-value { font-size: 1.3rem; font-family: monospace; color: #9bbc0f; font-weight: bold; }
+    @media (max-width: 600px) { h1 { font-size: 1.5rem; } table { font-size: 0.85rem; } .calc-result .amount { font-size: 2rem; } .calc-compare { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <a href="https://cntemup.com">CNTEM'UP</a>
+      <p>Bottle & Can Counter</p>
+    </div>
+
+    <h1>How Much Are My Cans Worth?</h1>
+    <p class="updated">Last updated: March 2026</p>
+
+    <p>The value of your cans depends on two things: <strong>where you live</strong> and <strong>how you're redeeming them</strong>. In the 10 US states with bottle deposit laws, you get 5-15 cents per container. In other states, you can sell cans as scrap aluminum for about 2 cents each.</p>
+
+    <p>Use the calculator below to see exactly what your collection is worth.</p>
+
+    <!-- Interactive Calculator -->
+    <div class="calc-box">
+      <label for="state-select">Your State</label>
+      <select id="state-select">
+        <option value="mi">Michigan — 10¢ deposit</option>
+        <option value="or">Oregon — 10¢ deposit</option>
+        <option value="ct">Connecticut — 10¢ deposit</option>
+        <option value="ca">California — 5¢ / 10¢ CRV</option>
+        <option value="ny" selected>New York — 5¢ deposit</option>
+        <option value="me">Maine — 5¢ / 15¢ deposit</option>
+        <option value="ma">Massachusetts — 5¢ deposit</option>
+        <option value="vt">Vermont — 5¢ / 15¢ deposit</option>
+        <option value="ia">Iowa — 5¢ deposit</option>
+        <option value="hi">Hawaii — 5¢ deposit</option>
+        <option value="scrap">Other state (scrap value only)</option>
+      </select>
+
+      <label for="can-count">Number of Cans / Bottles</label>
+      <input type="number" id="can-count" min="1" max="100000" value="100" placeholder="Enter your count">
+
+      <div class="calc-result">
+        <div class="amount" id="result-amount">$5.00</div>
+        <div class="detail" id="result-detail">100 cans × 5¢ deposit (New York)</div>
+      </div>
+
+      <div class="calc-compare">
+        <div class="comp">
+          <div class="comp-label">Deposit Value</div>
+          <div class="comp-value" id="comp-deposit">$5.00</div>
+        </div>
+        <div class="comp">
+          <div class="comp-label">Scrap Value</div>
+          <div class="comp-value" id="comp-scrap">$1.88</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function() {
+        var states = {
+          mi: { name: 'Michigan', rate: 0.10, label: '10¢ deposit' },
+          or: { name: 'Oregon', rate: 0.10, label: '10¢ deposit' },
+          ct: { name: 'Connecticut', rate: 0.10, label: '10¢ deposit' },
+          ca: { name: 'California', rate: 0.05, label: '5¢ CRV (10¢ for 24oz+)' },
+          ny: { name: 'New York', rate: 0.05, label: '5¢ deposit' },
+          me: { name: 'Maine', rate: 0.05, label: '5¢ deposit (15¢ wine/liquor)' },
+          ma: { name: 'Massachusetts', rate: 0.05, label: '5¢ deposit' },
+          vt: { name: 'Vermont', rate: 0.05, label: '5¢ deposit (15¢ liquor)' },
+          ia: { name: 'Iowa', rate: 0.05, label: '5¢ deposit' },
+          hi: { name: 'Hawaii', rate: 0.05, label: '5¢ deposit' },
+          scrap: { name: 'No deposit state', rate: 0, label: 'scrap aluminum only' }
+        };
+        var SCRAP_PER_CAN = 0.01875; // ~32 cans/lb at $0.60/lb
+
+        function calc() {
+          var stateKey = document.getElementById('state-select').value;
+          var count = parseInt(document.getElementById('can-count').value) || 0;
+          var state = states[stateKey];
+          var depositVal = count * state.rate;
+          var scrapVal = count * SCRAP_PER_CAN;
+          var mainVal = state.rate > 0 ? depositVal : scrapVal;
+
+          document.getElementById('result-amount').textContent = '$' + mainVal.toFixed(2);
+          document.getElementById('result-detail').textContent =
+            count.toLocaleString() + ' cans × ' + (state.rate > 0 ? state.label : '$0.60/lb scrap') + ' (' + state.name + ')';
+          document.getElementById('comp-deposit').textContent = state.rate > 0 ? '$' + depositVal.toFixed(2) : 'N/A';
+          document.getElementById('comp-scrap').textContent = '$' + scrapVal.toFixed(2);
+        }
+
+        document.getElementById('state-select').addEventListener('change', calc);
+        document.getElementById('can-count').addEventListener('input', calc);
+        calc();
+      })();
+    </script>
+
+    <div class="tip">
+      <strong>Don't know your count?</strong> Use <a href="https://cntemup.com">CNTEM'UP</a> to count your cans with your phone camera — then plug the number in above.
+    </div>
+
+    <h2>Deposit Value vs. Scrap Value</h2>
+
+    <p>There are two ways to get money for aluminum cans: <strong>deposit return</strong> and <strong>scrap recycling</strong>. The difference is massive.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Per Can</th>
+          <th>Per 100 Cans</th>
+          <th>Per 1,000 Cans</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>10¢ deposit (MI, OR, CT)</td>
+          <td class="highlight">10.0¢</td>
+          <td class="highlight">$10.00</td>
+          <td class="highlight">$100.00</td>
+        </tr>
+        <tr>
+          <td>5¢ deposit (NY, CA, MA, etc)</td>
+          <td class="highlight">5.0¢</td>
+          <td class="highlight">$5.00</td>
+          <td class="highlight">$50.00</td>
+        </tr>
+        <tr>
+          <td>Scrap aluminum</td>
+          <td>~1.9¢</td>
+          <td>$1.88</td>
+          <td>$18.75</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>Bottom line:</strong> if your state has a bottle deposit, always return containers for the deposit — never sell them as scrap. A 5-cent deposit is worth 2.5x more than scrap, and a 10-cent deposit is worth 5x more.</p>
+
+    <h2>Value by State — Quick Reference</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>State</th>
+          <th>Standard Deposit</th>
+          <th>100 Cans</th>
+          <th>500 Cans</th>
+          <th>1,000 Cans</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong><a href="/michigan-bottle-deposit">Michigan</a></strong></td><td class="highlight">10¢</td><td>$10</td><td>$50</td><td class="highlight">$100</td></tr>
+        <tr><td><strong>Oregon</strong></td><td class="highlight">10¢</td><td>$10</td><td>$50</td><td class="highlight">$100</td></tr>
+        <tr><td><strong>Connecticut</strong></td><td class="highlight">10¢</td><td>$10</td><td>$50</td><td class="highlight">$100</td></tr>
+        <tr><td><strong>California</strong></td><td>5¢ / 10¢</td><td>$5-10</td><td>$25-50</td><td>$50-100</td></tr>
+        <tr><td><strong>New York</strong></td><td>5¢</td><td>$5</td><td>$25</td><td>$50</td></tr>
+        <tr><td><strong>Maine</strong></td><td>5¢ / 15¢</td><td>$5-15</td><td>$25-75</td><td>$50-150</td></tr>
+        <tr><td><strong>Vermont</strong></td><td>5¢ / 15¢</td><td>$5-15</td><td>$25-75</td><td>$50-150</td></tr>
+        <tr><td><strong>Massachusetts</strong></td><td>5¢</td><td>$5</td><td>$25</td><td>$50</td></tr>
+        <tr><td><strong>Iowa</strong></td><td>5¢</td><td>$5</td><td>$25</td><td>$50</td></tr>
+        <tr><td><strong>Hawaii</strong></td><td>5¢</td><td>$5</td><td>$25</td><td>$50</td></tr>
+        <tr><td><em>Non-deposit states</em></td><td>Scrap only</td><td>$1.88</td><td>$9.38</td><td>$18.75</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Scrap Aluminum Prices (2026)</h2>
+
+    <p>If you don't live in a bottle deposit state, you can still recycle aluminum cans for cash at scrap yards. Here's what to expect:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Cans per pound</td><td><strong>~32 cans</strong></td></tr>
+        <tr><td>Price per pound (2026 avg)</td><td><strong>$0.50 – $0.65</strong></td></tr>
+        <tr><td>Price per can (scrap)</td><td>~1.5¢ – 2¢</td></tr>
+        <tr><td>Pounds for $10</td><td>~16-20 lbs (~530 cans)</td></tr>
+        <tr><td>Pounds for $100</td><td>~160-200 lbs (~5,300 cans)</td></tr>
+      </tbody>
+    </table>
+
+    <p>Scrap prices fluctuate with the aluminum commodity market. Check with your local scrap yard for today's rate. Prices tend to be higher in summer months.</p>
+
+    <div class="cta">
+      <h3>Count Your Cans in Seconds</h3>
+      <p>Stop hand-counting. CNTEM'UP uses your phone camera to count containers as you sort them — just slide cans past the camera.</p>
+      <a href="https://cntemup.com" class="btn">Count My Cans Free →</a>
+    </div>
+
+    <h2>Tips to Maximize Your Can Value</h2>
+
+    <ul style="margin: 1rem 0 1rem 1.5rem; color: #c0c0c0;">
+      <li style="margin: 0.5rem 0;"><strong>Don't crush cans</strong> if you're returning for deposit — machines need to scan the barcode</li>
+      <li style="margin: 0.5rem 0;"><strong>DO crush cans</strong> if selling as scrap — saves space and scrap yards pay by weight anyway</li>
+      <li style="margin: 0.5rem 0;"><strong>Separate by material</strong> — aluminum cans, glass bottles, and plastic bottles may have different redemption processes</li>
+      <li style="margin: 0.5rem 0;"><strong>Count before you go</strong> — know your total so you can verify the redemption center's count</li>
+      <li style="margin: 0.5rem 0;"><strong>Check for large containers</strong> — in California, 24oz+ containers are worth 10¢ instead of 5¢</li>
+      <li style="margin: 0.5rem 0;"><strong>Store cans dry</strong> — wet or sticky cans attract bugs and make counting harder</li>
+    </ul>
+
+    <h2>Frequently Asked Questions</h2>
+
+    <dl class="faq">
+      <dt>How much are my cans worth?</dt>
+      <dd>In deposit states: <strong>5-15 cents each</strong> depending on your state and container type. In non-deposit states: about <strong>1.5-2 cents each</strong> as scrap aluminum (~$0.50-0.65 per pound, 32 cans per pound).</dd>
+
+      <dt>How much is 1,000 cans worth?</dt>
+      <dd><strong>$100</strong> in 10-cent states (Michigan, Oregon, Connecticut). <strong>$50</strong> in 5-cent states (New York, Massachusetts, Iowa, Hawaii). About <strong>$18-20</strong> as scrap aluminum in non-deposit states.</dd>
+
+      <dt>Is it better to return cans for deposit or sell as scrap?</dt>
+      <dd><strong>Always return for deposit</strong> if your state has a bottle bill. A 5-cent deposit is worth 2.5x more than scrap, and a 10-cent deposit is worth 5x more. Only sell as scrap if your state doesn't have a deposit law.</dd>
+
+      <dt>How many cans are in a pound?</dt>
+      <dd>Approximately <strong>32 empty aluminum cans</strong> weigh one pound. This is a useful number for calculating scrap value.</dd>
+
+      <dt>How do I count a lot of cans quickly?</dt>
+      <dd>Use <a href="https://cntemup.com">CNTEM'UP</a> — prop up your phone, start the camera counter, and slide cans past the screen. The app counts each one automatically using camera detection.</dd>
+    </dl>
+
+    <h2>Related Guides</h2>
+    <ul style="margin: 1rem 0; list-style: none;">
+      <li style="margin: 0.5rem 0;">→ <a href="/bottle-deposit-states">Bottle Deposit States — All 10 States Guide</a></li>
+      <li style="margin: 0.5rem 0;">→ <a href="/how-many-cans-to-make-100">How Many Cans to Make $100?</a></li>
+      <li style="margin: 0.5rem 0;">→ <a href="/michigan-bottle-deposit">Michigan Bottle Deposit — 10¢ Guide</a></li>
+      <li style="margin: 0.5rem 0;">→ <a href="/bottle-deposit-calculator">Bottle Deposit Calculator</a></li>
+      <li style="margin: 0.5rem 0;">→ <a href="/bottle-deposit-near-me">Bottle Deposit Near Me — Where to Return</a></li>
+      <li style="margin: 0.5rem 0;">→ <a href="/how-to-count-cans-fast">How to Count Cans Fast</a></li>
+      <li style="margin: 0.5rem 0;">→ <a href="/bottle-deposit-countries">Bottle Deposit Countries — Global Guide</a></li>
+    </ul>
+
+    <footer>
+      <p><a href="https://cntemup.com">CNTEM'UP</a> — Free Bottle & Can Counter App</p>
+      <p>© 2026 CNTEM'UP. Built in NYC.</p>
+    </footer>
+  </div>
+</body>
+</html>
