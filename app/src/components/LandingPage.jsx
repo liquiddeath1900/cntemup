@@ -321,6 +321,11 @@ export function LandingPage() {
           <a href="/bottle-deposit-near-me">Near Me</a>
           <a href="/how-to-count-cans-fast">Counting Guide</a>
           <a href="/bottle-deposit-countries">Global Deposits</a>
+          <a href="/michigan-bottle-deposit">Michigan</a>
+          <a href="/nyc-bottle-deposit">NYC Guide</a>
+          <a href="/california-bottle-deposit">California CRV</a>
+          <a href="/bottle-drive">Bottle Drive</a>
+          <a href="/how-much-are-my-cans-worth">Can Value</a>
         </div>
         <p>CNTEM'UP © 2026</p>
         <p>BUILT IN NYC</p>
