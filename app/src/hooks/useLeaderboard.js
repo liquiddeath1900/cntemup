@@ -1,8 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
+// Demo fallback for local dev (Vercel API routes don't run in vite dev)
+const DEMO_FALLBACK = {
+  rankings: [
+    { display_name: 'BottleKing_NYC', total_count: 27340, is_premium: true },
+    { display_name: 'EcoWarrior', total_count: 14200, is_premium: true },
+    { display_name: 'CanCrusher99', total_count: 8750, is_premium: false },
+    { display_name: 'GreenMachine', total_count: 5100, is_premium: true },
+    { display_name: 'RecycleQueen', total_count: 3400, is_premium: false },
+  ],
+  globalStats: { totalBottles: 63860, totalCounters: 10 },
+  isDemo: true,
+}
+
 // Fetch leaderboard data — auto-refresh every 60s
-// In dev mode, uses ?demo=true so you can test with zero real users
-export function useLeaderboard() {
+// Supports period: 'weekly' (default) or 'alltime'
+export function useLeaderboard(period = 'weekly', enabled = true) {
   const [rankings, setRankings] = useState([])
   const [globalStats, setGlobalStats] = useState({ totalBottles: 0, totalCounters: 0 })
   const [isDemo, setIsDemo] = useState(false)
@@ -11,30 +24,49 @@ export function useLeaderboard() {
   const hasFetched = useRef(false)
 
   const fetchLeaderboard = useCallback(async () => {
+    if (!enabled) {
+      setRankings([])
+      setGlobalStats({ totalBottles: 0, totalCounters: 0 })
+      setIsDemo(false)
+      setLoading(false)
+      return
+    }
     if (!hasFetched.current) setLoading(true)
     setError(null)
 
     try {
-      // In dev, always show demo data so you can test the UI
-      const isDev = import.meta.env.DEV
-      const url = isDev ? '/api/leaderboard?demo=true' : '/api/leaderboard'
-
+      const url = `/api/leaderboard?period=${period}`
       const res = await fetch(url)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json()
 
+      const contentType = res.headers.get('content-type') || ''
+      if (!contentType.includes('application/json')) {
+        // Vite dev serves raw JS — fall back to demo data
+        throw new Error('NOT_JSON')
+      }
+
+      const data = await res.json()
       setRankings(data.rankings || [])
       setGlobalStats(data.globalStats || { totalBottles: 0, totalCounters: 0 })
       setIsDemo(data.isDemo || false)
       hasFetched.current = true
     } catch (err) {
-      setError(err.message)
+      // In dev, API routes don't exist — use demo fallback silently
+      if (import.meta.env.DEV) {
+        setRankings(DEMO_FALLBACK.rankings)
+        setGlobalStats(DEMO_FALLBACK.globalStats)
+        setIsDemo(true)
+        hasFetched.current = true
+      } else {
+        setError(err.message)
+      }
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [period, enabled])
 
   useEffect(() => {
+    hasFetched.current = false
     fetchLeaderboard()
     const interval = setInterval(fetchLeaderboard, 60000)
     return () => clearInterval(interval)

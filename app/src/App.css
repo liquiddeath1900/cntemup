@@ -2717,6 +2717,10 @@ body {
   line-height: 1.8;
 }
 
+.flagged-item {
+  border-left: 3px solid #ef4444;
+}
+
 /* ===== LEADERBOARD ===== */
 .leaderboard-demo-banner {
   font-family: 'Press Start 2P', monospace;
@@ -2728,6 +2732,43 @@ body {
   border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: 4px;
   letter-spacing: 0.1em;
+}
+
+/* Period toggle tabs */
+.leaderboard-period-toggle {
+  display: flex;
+  gap: 0;
+  border: 2px solid var(--gb-screen-dark);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 4px;
+  width: 100%;
+  max-width: 340px;
+}
+
+.period-tab {
+  flex: 1;
+  padding: 10px 0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  background: transparent;
+  border: none;
+  color: var(--gb-text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.period-tab-active {
+  background: rgba(155, 188, 15, 0.15);
+  color: var(--gb-screen-light);
+}
+
+.leaderboard-reset-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: var(--gb-text-dim);
+  text-align: center;
+  margin-bottom: 8px;
 }
 
 .leaderboard-cause {
@@ -2910,6 +2951,107 @@ body {
   background: rgba(155, 188, 15, 0.2);
   border-color: var(--gb-screen-light);
   color: var(--gb-screen-light);
+}
+
+/* ===== CONTAINER TYPE SELECTOR ===== */
+.container-type-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.container-type-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(155, 188, 15, 0.06);
+  border: 2px solid var(--gb-screen-dark);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Press Start 2P', monospace;
+  transition: all 0.15s;
+}
+
+.container-type-btn:hover {
+  border-color: var(--gb-text-dim);
+}
+
+.container-type-active {
+  background: rgba(155, 188, 15, 0.15);
+  border-color: var(--gb-screen-light);
+}
+
+.container-type-label {
+  font-size: 10px;
+  color: var(--gb-screen-light);
+}
+
+.container-type-rate {
+  font-size: 12px;
+  color: #d97706;
+  font-weight: bold;
+}
+
+/* ===== VERIFY SLIP MODAL ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  background: var(--gb-screen-bg);
+  border: 3px solid var(--gb-screen-light);
+  border-radius: 12px;
+  padding: clamp(24px, 6vw, 40px);
+  text-align: center;
+  max-width: 340px;
+  width: 100%;
+  animation: modalPop 0.3s ease-out;
+}
+
+.modal-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-md);
+  color: var(--gb-screen-light);
+  margin-bottom: 12px;
+}
+
+.modal-desc {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--gb-text-dim);
+  line-height: 1.8;
+  margin-bottom: 16px;
+}
+
+.slip-file-input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--gb-screen-light);
+}
+
+.slip-error {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #ef4444;
+  margin-bottom: 12px;
+}
+
+.slip-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
 }
 
 /* Rank badge in counter header */

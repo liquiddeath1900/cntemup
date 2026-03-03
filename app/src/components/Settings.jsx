@@ -16,6 +16,7 @@ export function Settings() {
   const [alertInput, setAlertInput] = useState(alertTarget || '')
   const [showUpgradeSuccess, setShowUpgradeSuccess] = useState(false)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [upgradeError, setUpgradeError] = useState(null)
 
   // Handle ?upgraded=true from Stripe redirect — poll until webhook fires
   useEffect(() => {
@@ -51,15 +52,25 @@ export function Settings() {
   }
 
   const handleUpgrade = async () => {
+    setUpgradeError(null)
     // Local users → sign in with Google first (creates real account for Stripe)
     if (isLocal) {
-      await signInWithGoogle()
+      try {
+        await signInWithGoogle()
+      } catch (err) {
+        setUpgradeError(`Google sign-in failed: ${err.message}`)
+      }
       return
     }
     setCheckoutLoading(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const token = session?.access_token
+      if (!token) {
+        setUpgradeError('No auth session — try signing out and back in')
+        setCheckoutLoading(false)
+        return
+      }
       const res = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -73,11 +84,12 @@ export function Settings() {
         window.location.href = data.url
         return
       }
-    } catch {
-      // API not available — use payment link fallback
+      setUpgradeError(data.error || 'Checkout failed — try again')
+    } catch (err) {
+      setUpgradeError(`Checkout error: ${err.message}`)
     }
     const fallbackLink = import.meta.env.VITE_STRIPE_PAYMENT_LINK
-    if (fallbackLink) {
+    if (fallbackLink && !upgradeError) {
       window.location.href = fallbackLink
     }
     setCheckoutLoading(false)
@@ -185,6 +197,11 @@ export function Settings() {
               >
                 {isLocal ? 'SIGN IN WITH GOOGLE TO GO PRO' : checkoutLoading ? 'LOADING...' : 'GO PRO — $1.99/MO'}
               </button>
+              {upgradeError && (
+                <div style={{ color: '#ff6b6b', fontSize: 'var(--font-xs)', marginTop: '8px', wordBreak: 'break-all' }}>
+                  {upgradeError}
+                </div>
+              )}
               <ul className="settings-pro-perks">
                 <li>See your money grow as you count</li>
                 <li>Bag alert / target limit</li>

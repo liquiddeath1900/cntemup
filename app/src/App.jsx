@@ -10,6 +10,7 @@ import { AdminPage } from './components/AdminPage'
 import { Leaderboard } from './components/Leaderboard'
 import { AlertModal } from './components/AlertModal'
 import { RankUpModal } from './components/RankUpModal'
+import { VerifySlipModal } from './components/VerifySlipModal'
 import { useCamera } from './hooks/useCamera'
 import { useTripwire } from './hooks/useTripwire'
 import { useAuth } from './hooks/useAuth'
@@ -23,14 +24,37 @@ import './App.css'
 
 const SESSIONS_KEY = 'cntemup_sessions'
 
+// Validate session rate — flag suspicious counts (never blocks, just flags)
+function validateSession(count, durationSeconds, previousBest) {
+  const rate = durationSeconds > 0 ? count / durationSeconds : 0
+
+  // 1.5 cans/sec sustained is generous real-world limit
+  if (rate > 1.5 && durationSeconds > 5) {
+    return { flagged: true, reason: `Rate ${rate.toFixed(1)}/sec exceeds 1.5/sec limit` }
+  }
+  // Impossibly fast short session
+  if (durationSeconds < 10 && count > 20) {
+    return { flagged: true, reason: `${count} items in ${durationSeconds}s is impossibly fast` }
+  }
+  // 5x personal best spike (first session exempt)
+  if (previousBest > 0 && count > previousBest * 5) {
+    return { flagged: true, reason: `Count ${count} is >5x personal best (${previousBest})` }
+  }
+  return { flagged: false, reason: null }
+}
+
 // Save session locally or to Supabase
-async function saveSession(userId, count, depositValue, stateCode) {
+async function saveSession(userId, count, depositValue, stateCode, startedAt, durationSeconds, isFlagged, flagReason) {
   const session = {
     id: crypto.randomUUID(),
     user_id: userId,
     count,
     deposit_value: depositValue,
     state_code: stateCode,
+    started_at: startedAt,
+    duration_seconds: durationSeconds,
+    is_flagged: isFlagged || false,
+    flag_reason: flagReason || null,
     created_at: new Date().toISOString(),
   }
 
@@ -55,13 +79,15 @@ function CounterPage() {
   const [showAlertModal, setShowAlertModal] = useState(false)
   const [alertFired, setAlertFired] = useState(false)
   const [rankUpInfo, setRankUpInfo] = useState(null)
+  const [verifySessionId, setVerifySessionId] = useState(null)
   const cameraContainerRef = useRef(null)
+  const sessionStartRef = useRef(null)
 
   const { user, profile, isLocal } = useAuth()
   const { isPremium, alertTarget } = usePremium(profile)
   const { stats: historyStats } = useHistory(user?.id, isLocal)
   const myRank = getRank(historyStats?.totalBottles || 0)
-  const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code)
+  const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code, profile?.container_type || 'standard')
   const { muted, toggleMute, playCount, playAlarm, playBoot } = useSound()
   const { videoRef, isStreaming, videoReady, error: cameraError, debugLog, devices, startCamera, stopCamera, switchCamera, handleTapToPlay } = useCamera()
   const { startTripwire, stopTripwire, tripwireY, setTripwireY, isTriggered, setOnTrigger } = useTripwire()
@@ -69,6 +95,8 @@ function CounterPage() {
   // Wire tripwire trigger → increment count + sound + alert check
   useEffect(() => {
     setOnTrigger(() => {
+      // Track session start time on first item
+      if (!sessionStartRef.current) sessionStartRef.current = Date.now()
       setCount(prev => prev + 1)
       setSessionCount(prev => {
         const next = prev + 1
@@ -92,6 +120,7 @@ function CounterPage() {
   }, [isRunning, videoReady, videoRef, startTripwire])
 
   const handleManualAdd = () => {
+    if (!sessionStartRef.current) sessionStartRef.current = Date.now()
     setCount(prev => prev + 1)
     setSessionCount(prev => prev + 1)
     playCount()
@@ -130,6 +159,7 @@ function CounterPage() {
     setSessionCount(0)
     setAlertFired(false)
     setShowAlertModal(false)
+    sessionStartRef.current = null
   }
 
   const handleSaveSession = async () => {
@@ -140,14 +170,25 @@ function CounterPage() {
       const prevTotal = historyStats?.totalBottles || 0
       const prevRank = getRank(prevTotal)
 
+      // Calculate timing + validate
+      const startedAt = sessionStartRef.current ? new Date(sessionStartRef.current).toISOString() : new Date().toISOString()
+      const durationSeconds = sessionStartRef.current ? Math.round((Date.now() - sessionStartRef.current) / 1000) : 0
+      const previousBest = historyStats?.bestSession || 0
+      const { flagged, reason } = validateSession(sessionCount, durationSeconds, previousBest)
+
       const depositValue = calculateDeposit(sessionCount)
-      await saveSession(user.id, sessionCount, depositValue, profile?.state_code || 'NY')
+      const savedSession = await saveSession(user.id, sessionCount, depositValue, profile?.state_code || 'NY', startedAt, durationSeconds, flagged, reason)
 
       // Check if rank changed after adding this session's count
       const newTotal = prevTotal + sessionCount
       const newRank = getRank(newTotal)
       if (newRank.name !== prevRank.name) {
         setRankUpInfo(newRank)
+      }
+
+      // Prompt for slip verification (only for Google-authed users)
+      if (user.id !== 'local' && !flagged) {
+        setVerifySessionId(savedSession.id)
       }
 
       handleClearSession()
@@ -206,6 +247,15 @@ function CounterPage() {
       {/* Rank-up modal */}
       {rankUpInfo && (
         <RankUpModal newRank={rankUpInfo} onClose={() => setRankUpInfo(null)} />
+      )}
+
+      {/* Verify slip modal */}
+      {verifySessionId && (
+        <VerifySlipModal
+          sessionId={verifySessionId}
+          onClose={() => setVerifySessionId(null)}
+          onUploaded={() => setVerifySessionId(null)}
+        />
       )}
 
       {/* Alert modal */}

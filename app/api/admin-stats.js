@@ -105,6 +105,71 @@ export default async function handler(req, res) {
       recentWaitlist = data || []
     } catch {}
 
+    // Flagged sessions — suspicious rate/count
+    let flaggedSessions = []
+    try {
+      const { data } = await supabase
+        .from('counting_sessions')
+        .select('id, user_id, count, duration_seconds, is_flagged, flag_reason, started_at, created_at')
+        .eq('is_flagged', true)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      // Enrich with display names
+      if (data?.length) {
+        const flaggedUserIds = [...new Set(data.map(s => s.user_id))]
+        const { data: flaggedProfiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name')
+          .in('user_id', flaggedUserIds)
+        const nameMap = {}
+        for (const p of (flaggedProfiles || [])) nameMap[p.user_id] = p.display_name
+        flaggedSessions = data.map(s => ({
+          ...s,
+          display_name: nameMap[s.user_id] || 'Unknown',
+          rate: s.duration_seconds > 0 ? (s.count / s.duration_seconds).toFixed(2) : '—',
+        }))
+      }
+    } catch {}
+
+    // Pending verification slips
+    let pendingVerifications = []
+    try {
+      const { data } = await supabase
+        .from('session_verifications')
+        .select('id, session_id, user_id, image_url, status, created_at')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(50)
+      if (data?.length) {
+        // Enrich with session count + user name
+        const sessIds = data.map(v => v.session_id)
+        const userIds = [...new Set(data.map(v => v.user_id))]
+        const { data: sessions } = await supabase
+          .from('counting_sessions')
+          .select('id, count, deposit_value, state_code')
+          .in('id', sessIds)
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, state_code')
+          .in('user_id', userIds)
+        const sessMap = {}
+        for (const s of (sessions || [])) sessMap[s.id] = s
+        const nameMap = {}
+        for (const p of (profiles || [])) nameMap[p.user_id] = p.display_name
+        pendingVerifications = data.map(v => {
+          const sess = sessMap[v.session_id] || {}
+          const stateCode = sess.state_code || 'NY'
+          return {
+            ...v,
+            display_name: nameMap[v.user_id] || 'Unknown',
+            count: sess.count || 0,
+            deposit_value: sess.deposit_value || 0,
+            state_code: stateCode,
+          }
+        })
+      }
+    } catch {}
+
     // Auth users from Supabase (Google sign-ins) — get emails via admin API
     let authUsers = []
     try {
@@ -130,6 +195,8 @@ export default async function handler(req, res) {
       recentSignups: recentSignups || [],
       recentWaitlist,
       authUsers,
+      flaggedSessions,
+      pendingVerifications,
     })
   } catch (err) {
     console.error('Admin stats error:', err.message)

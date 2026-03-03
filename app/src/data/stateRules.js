@@ -56,7 +56,7 @@ export const STATE_RULES = {
     exclusions: ['milk', 'dairy', 'infant formula'],
     size_limits: { min_oz: 0, max_oz: 68 },
     special_rates: null,
-    notes: 'HI-5 program. 1¢ non-refundable fee funds the program.',
+    notes: 'HI-5 program. 1¢ handling fee deducted at redemption (net 4¢).',
   },
 
   IA: {

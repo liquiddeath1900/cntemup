@@ -19,6 +19,18 @@ const DEMO_DATA = {
   ],
   globalStats: { totalBottles: 63860, totalCounters: 10 },
   isDemo: true,
+  period: 'alltime',
+}
+
+// Get Monday 00:00 UTC for current week
+function getWeekStart() {
+  const now = new Date()
+  const day = now.getUTCDay()
+  const diff = day === 0 ? 6 : day - 1 // Monday = 0 offset
+  const monday = new Date(now)
+  monday.setUTCDate(now.getUTCDate() - diff)
+  monday.setUTCHours(0, 0, 0, 0)
+  return monday.toISOString()
 }
 
 export default async function handler(req, res) {
@@ -27,20 +39,21 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
+  const period = req.query.period || 'weekly' // weekly (default) or alltime
+
   // Demo mode — for testing with zero users
   if (req.query.demo === 'true') {
-    return res.status(200).json(DEMO_DATA)
+    return res.status(200).json({ ...DEMO_DATA, period })
   }
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    return res.status(200).json(DEMO_DATA) // Fallback to demo if no Supabase
+    return res.status(200).json({ ...DEMO_DATA, period })
   }
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Get all users who opted into leaderboard, with their total counts
-    // Join profiles (where show_on_leaderboard = true) with sum of counting_sessions
+    // Get all users who opted into leaderboard
     const { data: profiles, error: profileError } = await supabase
       .from('profiles')
       .select('user_id, display_name, is_premium, show_on_leaderboard')
@@ -49,17 +62,22 @@ export default async function handler(req, res) {
     if (profileError) throw profileError
 
     if (!profiles || profiles.length === 0) {
-      // No opted-in users — return demo data so page isn't empty
-      return res.status(200).json(DEMO_DATA)
+      return res.status(200).json({ ...DEMO_DATA, period })
     }
 
-    // Get session counts for opted-in users
+    // Build session query — exclude flagged, optionally filter by week
     const userIds = profiles.map(p => p.user_id)
-    const { data: sessions, error: sessError } = await supabase
+    let sessQuery = supabase
       .from('counting_sessions')
       .select('user_id, count')
       .in('user_id', userIds)
+      .or('is_flagged.is.null,is_flagged.eq.false')
 
+    if (period === 'weekly') {
+      sessQuery = sessQuery.gte('created_at', getWeekStart())
+    }
+
+    const { data: sessions, error: sessError } = await sessQuery
     if (sessError) throw sessError
 
     // Aggregate counts per user
@@ -75,10 +93,11 @@ export default async function handler(req, res) {
         total_count: countMap[p.user_id] || 0,
         is_premium: p.is_premium || false,
       }))
+      .filter(r => r.total_count > 0) // Hide zero-count users in weekly view
       .sort((a, b) => b.total_count - a.total_count)
       .slice(0, 50)
 
-    // Global stats (all users, not just opted-in)
+    // Global stats (all users, all time, not just opted-in)
     const { data: allSessions } = await supabase
       .from('counting_sessions')
       .select('count')
@@ -96,10 +115,10 @@ export default async function handler(req, res) {
         totalCounters: totalCounters || 0,
       },
       isDemo: false,
+      period,
     })
   } catch (err) {
     console.error('Leaderboard error:', err)
-    // On error, return demo data so page still works
-    return res.status(200).json({ ...DEMO_DATA, error: err.message })
+    return res.status(200).json({ ...DEMO_DATA, error: err.message, period })
   }
 }

@@ -38,7 +38,7 @@ async function ensureProfile(userId, userMeta) {
   // Try to fetch existing profile
   const { data: existing } = await supabase
     .from('profiles')
-    .select('user_id, display_name, full_name, state_code, is_premium, subscription_status, alert_target, show_on_leaderboard, created_at, updated_at')
+    .select('user_id, display_name, full_name, state_code, container_type, is_premium, subscription_status, alert_target, show_on_leaderboard, created_at, updated_at')
     .eq('user_id', userId)
     .single()
 
@@ -50,8 +50,10 @@ async function ensureProfile(userId, userMeta) {
     display_name: userMeta?.full_name || userMeta?.name || userMeta?.email?.split('@')[0] || 'Player',
     full_name: userMeta?.full_name || userMeta?.name || '',
     state_code: 'NY',
+    container_type: 'standard',
     is_premium: false,
     alert_target: 0,
+    show_on_leaderboard: false,
   }
 
   const { data: created, error } = await supabase
@@ -158,7 +160,7 @@ function useAuthInternal() {
     if (!supabaseEnabled || !user || user.id === 'local') return null
     const { data } = await supabase
       .from('profiles')
-      .select('user_id, display_name, full_name, state_code, is_premium, subscription_status, alert_target, show_on_leaderboard, created_at, updated_at')
+      .select('user_id, display_name, full_name, state_code, container_type, is_premium, subscription_status, alert_target, show_on_leaderboard, created_at, updated_at')
       .eq('user_id', user.id)
       .single()
     if (data) setProfile(data)
@@ -299,6 +301,29 @@ function useAuthInternal() {
     return () => subscription.unsubscribe()
   }, [initLocal])
 
+  const updateContainerType = useCallback(async (containerType) => {
+    if (supabaseEnabled && user?.id !== 'local') {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .update({ container_type: containerType, updated_at: new Date().toISOString() })
+          .eq('user_id', user.id)
+          .select()
+          .single()
+        if (error) throw error
+        setProfile(data)
+      } catch (err) {
+        setError(err.message)
+      }
+    } else {
+      setProfile(prev => {
+        const updated = { ...prev, container_type: containerType, updated_at: new Date().toISOString() }
+        saveLocalProfile(updated)
+        return updated
+      })
+    }
+  }, [user])
+
   const updateLeaderboardVisibility = useCallback(async (visible) => {
     if (supabaseEnabled && user?.id !== 'local') {
       try {
@@ -336,6 +361,7 @@ function useAuthInternal() {
     refreshProfile,
     updateState,
     updateAlertTarget,
+    updateContainerType,
     updateLeaderboardVisibility,
   }
 }

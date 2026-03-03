@@ -55,6 +55,7 @@ export function useHistory(userId, isLocal) {
     totalSessions: sessions.length,
     totalBottles: sessions.reduce((sum, s) => sum + (s.count || 0), 0),
     totalEarnings: sessions.reduce((sum, s) => sum + (parseFloat(s.deposit_value) || 0), 0),
+    bestSession: sessions.reduce((max, s) => Math.max(max, s.count || 0), 0),
   }
 
   return { sessions, stats, loading, error, refresh: fetchSessions }
