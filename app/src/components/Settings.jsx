@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { usePremium } from '../hooks/usePremium'
 import { StateSelector } from './StateSelector'
+import { getContainerOptions, MULTI_RATE_STATES } from '../hooks/useDepositRules'
 import { supabase } from '../lib/supabase'
 import { getRank } from '../lib/ranks'
 
@@ -10,7 +11,7 @@ import { getRank } from '../lib/ranks'
 export function Settings() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { user, profile, signOut, isLocal, refreshProfile, updateAlertTarget, updateState, signInWithGoogle, updateLeaderboardVisibility } = useAuth()
+  const { user, profile, signOut, isLocal, refreshProfile, updateAlertTarget, updateState, updateContainerType, signInWithGoogle, updateLeaderboardVisibility } = useAuth()
   const { isPremium, alertTarget, subscriptionStatus, premiumSince } = usePremium(profile)
   const [alertInput, setAlertInput] = useState(alertTarget || '')
   const [showUpgradeSuccess, setShowUpgradeSuccess] = useState(false)
@@ -132,13 +133,39 @@ export function Settings() {
           />
         </div>
 
+        {/* Container type — multi-rate states only (CA/ME/VT), Pro users */}
+        {isPremium && MULTI_RATE_STATES.has(profile?.state_code) && (() => {
+          const options = getContainerOptions(profile.state_code)
+          if (!options) return null
+          return (
+            <div className="settings-section">
+              <h2 className="settings-section-title">CONTAINER TYPE</h2>
+              <p className="settings-section-desc">
+                {profile.state_code} has different rates by container
+              </p>
+              <div className="container-type-options">
+                {options.map(opt => (
+                  <button
+                    key={opt.value}
+                    className={`container-type-btn ${(profile.container_type || 'standard') === opt.value ? 'container-type-active' : ''}`}
+                    onClick={() => updateContainerType(opt.value)}
+                  >
+                    <span className="container-type-label">{opt.label}</span>
+                    <span className="container-type-rate">{Math.round(opt.rate * 100)}¢</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
+
         {/* Plan status */}
         <div className="settings-section">
           <h2 className="settings-section-title">PLAN</h2>
           {isPremium ? (
             <div className="settings-plan-card settings-plan-pro">
               <div className="settings-plan-name">PRO</div>
-              <div className="settings-plan-price">$2/mo</div>
+              <div className="settings-plan-price">$1.99/mo</div>
               <div className="settings-plan-status">
                 {subscriptionStatus === 'active' ? 'ACTIVE' : subscriptionStatus?.toUpperCase()}
               </div>
@@ -156,13 +183,13 @@ export function Settings() {
                 onClick={handleUpgrade}
                 disabled={checkoutLoading}
               >
-                {isLocal ? 'SIGN IN WITH GOOGLE TO GO PRO' : checkoutLoading ? 'LOADING...' : 'GO PRO — $2/MO'}
+                {isLocal ? 'SIGN IN WITH GOOGLE TO GO PRO' : checkoutLoading ? 'LOADING...' : 'GO PRO — $1.99/MO'}
               </button>
               <ul className="settings-pro-perks">
                 <li>See your money grow as you count</li>
                 <li>Bag alert / target limit</li>
                 <li>45-day session history</li>
-                <li>All for just $2/mo</li>
+                <li>All for just $1.99/mo</li>
               </ul>
             </div>
           )}
