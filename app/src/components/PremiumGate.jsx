@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { usePremium } from '../hooks/usePremium'
+import { supabase } from '../lib/supabase'
 
 // Wrapper — shows upgrade prompt for locked features
 export function PremiumGate({ children, feature = 'this feature' }) {
@@ -17,13 +18,15 @@ export function PremiumGate({ children, feature = 'this feature' }) {
       return
     }
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
       const res = await fetch('/api/create-checkout-session', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          email: user.email,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
       })
       const data = await res.json()
       if (data.url) window.location.href = data.url
