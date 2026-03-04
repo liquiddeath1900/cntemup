@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 // Check if a detection bbox center is inside the count zone (center 60% of frame)
+// eslint-disable-next-line react-refresh/only-export-components
 export function isInCountZone(bbox, videoWidth, videoHeight) {
   const [x, y, w, h] = bbox
   const centerX = x + w / 2

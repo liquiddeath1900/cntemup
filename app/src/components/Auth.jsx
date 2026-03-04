@@ -8,7 +8,7 @@ const WAITLIST_KEY = 'cntemup_waitlist'
 const USER_KEY = 'cntemup_user'
 
 // Save signup to waitlist table + localStorage (same as landing page)
-async function saveSignup({ name, email, stateCode }) {
+async function saveSignup({ name, email }) {
   const list = JSON.parse(localStorage.getItem(WAITLIST_KEY) || '[]')
   list.push({ name, email, created_at: new Date().toISOString() })
   localStorage.setItem(WAITLIST_KEY, JSON.stringify(list))
@@ -20,7 +20,7 @@ async function saveSignup({ name, email, stateCode }) {
         email,
         source: 'auth-page',
       }, { onConflict: 'email' })
-    } catch {}
+    } catch { /* Supabase may be unavailable */ }
   }
 
   const user = { name, email, loggedIn: true, created_at: new Date().toISOString() }

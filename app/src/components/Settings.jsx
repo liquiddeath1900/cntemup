@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { usePremium } from '../hooks/usePremium'
 import { StateSelector } from './StateSelector'
@@ -9,7 +9,6 @@ import { getRank } from '../lib/ranks'
 
 // Settings page — plan status, upgrade, alerts, navigation
 export function Settings() {
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { user, profile, signOut, isLocal, refreshProfile, updateAlertTarget, updateState, updateContainerType, signInWithGoogle, updateLeaderboardVisibility } = useAuth()
   const { isPremium, alertTarget, subscriptionStatus, premiumSince } = usePremium(profile)
@@ -195,7 +194,8 @@ export function Settings() {
                 onClick={handleUpgrade}
                 disabled={checkoutLoading}
               >
-                {isLocal ? 'SIGN IN WITH GOOGLE TO GO PRO' : checkoutLoading ? 'LOADING...' : 'GO PRO — $1.99/MO'}
+                {/* eslint-disable-next-line no-nested-ternary */}
+                {isLocal ? 'SIGN IN WITH GOOGLE TO GO PRO' : (checkoutLoading ? 'LOADING...' : 'GO PRO — $1.99/MO')}
               </button>
               {upgradeError && (
                 <div style={{ color: '#ff6b6b', fontSize: 'var(--font-xs)', marginTop: '8px', wordBreak: 'break-all' }}>

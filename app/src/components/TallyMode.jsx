@@ -4,7 +4,7 @@ import { useTripwire } from '../hooks/useTripwire'
 
 // TallyMode — manual tap counter + camera-based tripwire counting
 // Two sub-modes: TAP (no camera, big +1 button) and TRIPWIRE (camera + beam line)
-export function TallyMode({ count, setCount, sessionCount, setSessionCount }) {
+export function TallyMode({ setCount, setSessionCount }) {
   const [subMode, setSubMode] = useState('tap') // 'tap' | 'tripwire'
   const [tripwireActive, setTripwireActive] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -73,7 +73,7 @@ export function TallyMode({ count, setCount, sessionCount, setSessionCount }) {
   // Stop tripwire when switching to tap mode
   useEffect(() => {
     if (subMode === 'tap' && tripwireActive) {
-      handleStopTripwire()
+      handleStopTripwire() // eslint-disable-line react-hooks/set-state-in-effect
     }
   }, [subMode]) // eslint-disable-line react-hooks/exhaustive-deps
 

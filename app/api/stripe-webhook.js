@@ -118,7 +118,7 @@ export default async function handler(req, res) {
     }
 
     res.status(200).json({ received: true })
-  } catch (err) {
+  } catch (_err) {
     console.error('Webhook handler error: processing failed')
     // Return 500 so Stripe retries — user won't lose their money
     res.status(500).json({ error: 'Webhook processing failed' })

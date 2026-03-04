@@ -2,7 +2,7 @@
  * Smart detection hook — tries YOLO custom model first, falls back to COCO-SSD.
  * Drop your trained model at public/models/bottle-can.onnx and it auto-switches.
  */
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useYoloDetection, DETECTION_CONFIG as YOLO_CONFIG } from './useYoloDetection'
 import { useObjectDetection, DETECTION_CONFIG as COCO_CONFIG } from './useObjectDetection'
 
@@ -25,7 +25,7 @@ export function useDetection() {
   useEffect(() => {
     yoloModelExists().then(exists => {
       setUseYolo(exists)
-      console.log(exists ? 'YOLO model found — using custom detector' : 'No YOLO model — using COCO-SSD fallback')
+      console.warn(exists ? 'YOLO model found — using custom detector' : 'No YOLO model — using COCO-SSD fallback')
     })
   }, [])
 

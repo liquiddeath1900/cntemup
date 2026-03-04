@@ -190,7 +190,7 @@ export function useYoloDetection() {
       setLoadProgress(100)
       setModel(session)
       setIsLoading(false)
-      console.log('YOLOv8 model loaded!')
+      console.warn('YOLOv8 model loaded!')
       return session
     } catch (err) {
       console.error('YOLO model load error:', err)

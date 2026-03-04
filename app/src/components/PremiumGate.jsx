@@ -1,12 +1,10 @@
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { usePremium } from '../hooks/usePremium'
 import { supabase } from '../lib/supabase'
 
 // Wrapper — shows upgrade prompt for locked features
 export function PremiumGate({ children, feature = 'this feature' }) {
-  const navigate = useNavigate()
-  const { user, profile, isLocal, signInWithGoogle } = useAuth()
+  const { profile, isLocal, signInWithGoogle } = useAuth()
   const { isPremium } = usePremium(profile)
 
   if (isPremium) return children

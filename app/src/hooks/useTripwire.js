@@ -72,6 +72,9 @@ export function useTripwire() {
     return changed / prev.length
   }, [])
 
+  // Ref to hold processFrame so it can self-reference without declaration order issues
+  const processFrameRef = useRef(null)
+
   // Main detection loop
   const processFrame = useCallback((video, timestamp) => {
     if (!isRunning) return
@@ -79,7 +82,7 @@ export function useTripwire() {
     // Throttle to TARGET_FPS
     const elapsed = timestamp - lastFrameTime.current
     if (elapsed < 1000 / TARGET_FPS) {
-      rafRef.current = requestAnimationFrame((ts) => processFrame(video, ts))
+      rafRef.current = requestAnimationFrame((ts) => processFrameRef.current(video, ts))
       return
     }
     lastFrameTime.current = timestamp
@@ -106,8 +109,13 @@ export function useTripwire() {
     }
     prevStripRef.current = currentStrip
 
-    rafRef.current = requestAnimationFrame((ts) => processFrame(video, ts))
+    rafRef.current = requestAnimationFrame((ts) => processFrameRef.current(video, ts))
   }, [isRunning, getStrip, compareStrips])
+
+  // Keep ref in sync with latest processFrame
+  useEffect(() => {
+    processFrameRef.current = processFrame
+  }, [processFrame])
 
   // Start tripwire detection on a video element
   const startTripwire = useCallback((video) => {
@@ -117,8 +125,8 @@ export function useTripwire() {
     setIsRunning(true)
 
     // Kick off the rAF loop
-    rafRef.current = requestAnimationFrame((ts) => processFrame(video, ts))
-  }, [processFrame])
+    rafRef.current = requestAnimationFrame((ts) => processFrameRef.current(video, ts))
+  }, [])
 
   // Stop tripwire detection
   const stopTripwire = useCallback(() => {

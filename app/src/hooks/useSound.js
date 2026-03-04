@@ -90,7 +90,7 @@ export function useSound() {
     setMuted(prev => {
       const next = !prev
       mutedRef.current = next
-      try { localStorage.setItem(MUTE_KEY, String(next)) } catch {}
+      try { localStorage.setItem(MUTE_KEY, String(next)) } catch { /* storage unavailable */ }
       return next
     })
   }, [])

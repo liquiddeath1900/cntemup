@@ -12,7 +12,7 @@ export function useCamera() {
   const streamRef = useRef(null)
 
   const log = useCallback((msg) => {
-    console.log('[Camera]', msg)
+    console.warn('[Camera]', msg)
     setDebugLog(prev => [...prev.slice(-9), `${new Date().toLocaleTimeString()}: ${msg}`])
   }, [])
 

@@ -92,7 +92,7 @@ export default async function handler(req, res) {
         .from('counting_sessions')
         .select('*', { count: 'exact', head: true })
       totalSessions = count || 0
-    } catch {}
+    } catch { /* table may not exist */ }
 
     // Waitlist entries (name+email free signups) — last 50
     let recentWaitlist = []
@@ -103,7 +103,7 @@ export default async function handler(req, res) {
         .order('created_at', { ascending: false })
         .limit(50)
       recentWaitlist = data || []
-    } catch {}
+    } catch { /* table may not exist */ }
 
     // Flagged sessions — suspicious rate/count
     let flaggedSessions = []
@@ -129,7 +129,7 @@ export default async function handler(req, res) {
           rate: s.duration_seconds > 0 ? (s.count / s.duration_seconds).toFixed(2) : '—',
         }))
       }
-    } catch {}
+    } catch { /* table may not exist */ }
 
     // Pending verification slips
     let pendingVerifications = []
@@ -168,7 +168,7 @@ export default async function handler(req, res) {
           }
         })
       }
-    } catch {}
+    } catch { /* table may not exist */ }
 
     // Auth users from Supabase (Google sign-ins) — get emails via admin API
     let authUsers = []
@@ -181,7 +181,7 @@ export default async function handler(req, res) {
         created_at: u.created_at,
         last_sign_in: u.last_sign_in_at,
       }))
-    } catch {}
+    } catch { /* admin API may not be available */ }
 
     res.status(200).json({
       totalUsers: totalUsers || 0,

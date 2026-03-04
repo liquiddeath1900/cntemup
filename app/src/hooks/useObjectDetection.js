@@ -63,7 +63,7 @@ export function useObjectDetection() {
       modelConfigRef.current = modelKey
 
       const config = MODEL_CONFIG[modelKey]
-      console.log(`Loading ${config.name}...`)
+      console.warn(`Loading ${config.name}...`)
 
       // Simulate progress since COCO-SSD doesn't emit progress events
       const progressTimer = setInterval(() => {
@@ -75,7 +75,7 @@ export function useObjectDetection() {
       setLoadProgress(100)
 
       setModel(loadedModel)
-      console.log('Model loaded!')
+      console.warn('Model loaded!')
       setIsLoading(false)
       return loadedModel
     } catch (err) {

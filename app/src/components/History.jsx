@@ -22,6 +22,7 @@ export function History() {
       </header>
 
       <main className="settings-main">
+        {/* eslint-disable no-nested-ternary */}
         {!isPremium ? (
           <PremiumGate feature="session history">
             <div />
@@ -87,6 +88,7 @@ export function History() {
             )}
           </>
         )}
+        {/* eslint-enable no-nested-ternary */}
       </main>
 
       <footer className="settings-footer">

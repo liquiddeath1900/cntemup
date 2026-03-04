@@ -83,6 +83,7 @@ export function Leaderboard() {
             </div>
 
             {/* Rankings list */}
+            {/* eslint-disable no-nested-ternary */}
             {loading ? (
               <div className="history-loading">LOADING...</div>
             ) : error ? (
@@ -139,6 +140,7 @@ export function Leaderboard() {
             )}
           </>
         )}
+        {/* eslint-enable no-nested-ternary */}
 
         {/* Your rank card (if not on leaderboard) */}
         {!isOptedIn && (

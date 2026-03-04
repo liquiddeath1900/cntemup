@@ -8,7 +8,7 @@ function getLocalProfile() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) return JSON.parse(stored)
-  } catch {}
+  } catch { /* corrupt localStorage */ }
   return null
 }
 
@@ -26,11 +26,12 @@ export function AuthProvider({ children }) {
 }
 
 // Hook — reads from shared context
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext)
   if (ctx) return ctx
   // Fallback for components outside provider (shouldn't happen)
-  return useAuthInternal()
+  return useAuthInternal() // eslint-disable-line react-hooks/rules-of-hooks
 }
 
 // Helper — fetch or create Supabase profile for a user

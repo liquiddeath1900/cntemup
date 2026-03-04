@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
 import { useAdminStats } from '../hooks/useAdminStats'
 
 // Admin dashboard — full visibility into all users
 export function AdminPage() {
-  const { user } = useAuth()
   const { stats, loading, error, refresh } = useAdminStats()
   const [expandedId, setExpandedId] = useState(null)
 

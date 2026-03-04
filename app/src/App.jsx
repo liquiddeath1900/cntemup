@@ -411,6 +411,7 @@ function AdminRoute({ element }) {
   const adminEmail = import.meta.env.VITE_ADMIN_EMAIL
   if (loading) return null
   if (!user || !adminEmail || user.email !== adminEmail) {
+    // eslint-disable-next-line react-hooks/immutability
     window.location.href = '/'
     return null
   }

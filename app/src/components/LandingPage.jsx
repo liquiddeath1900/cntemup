@@ -8,6 +8,7 @@ const WAITLIST_KEY = 'cntemup_waitlist'
 const USER_KEY = 'cntemup_user'
 
 // Check if user already signed up
+// eslint-disable-next-line react-refresh/only-export-components
 export function getLoggedInUser() {
   try {
     return JSON.parse(localStorage.getItem(USER_KEY))
@@ -271,6 +272,7 @@ export function LandingPage() {
 
       {/* ===== SIGNUP — Gate to counter ===== */}
       <section className="landing-signup-section" ref={formRef}>
+        {/* eslint-disable-next-line no-nested-ternary */}
         {status === 'done' ? (
           <div className="landing-success">
             <div className="landing-success-icon">✓</div>
