@@ -15,11 +15,12 @@ async function saveSignup({ name, email }) {
 
   if (supabaseEnabled && supabase) {
     try {
-      await supabase.from('waitlist').upsert({
-        name: name || null,
+      const { error } = await supabase.from('waitlist').upsert({
+        name: name || 'Anonymous',
         email,
         source: 'auth-page',
       }, { onConflict: 'email' })
+      if (error) console.warn('Waitlist save failed:', error.message)
     } catch { /* Supabase may be unavailable */ }
   }
 

@@ -27,14 +27,12 @@ async function saveSignup({ name, email, city, region, country }) {
   // Also save to Supabase if available (non-blocking)
   if (supabaseEnabled && supabase) {
     try {
-      await supabase.from('waitlist').insert({
-        name: name || null,
+      const { error } = await supabase.from('waitlist').upsert({
+        name: name || 'Anonymous',
         email,
-        city: city || null,
-        region: region || null,
-        country: country || null,
         source: 'landing',
-      })
+      }, { onConflict: 'email' })
+      if (error) console.warn('[Waitlist] Supabase save failed:', error.message)
     } catch (err) {
       console.warn('[Waitlist] Supabase insert failed, saved locally', err)
     }

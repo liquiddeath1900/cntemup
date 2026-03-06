@@ -2,12 +2,23 @@ import { useState, useEffect, useCallback, useContext, createContext } from 'rea
 import { supabase, supabaseEnabled } from '../lib/supabase'
 
 const STORAGE_KEY = 'cntemup_profile'
+const SESSION_DAYS = 30
 
-// Default local profile
+// Default local profile — expires after 30 days
 function getLocalProfile() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) return JSON.parse(stored)
+    if (!stored) return null
+    const parsed = JSON.parse(stored)
+    // Check 30-day expiry
+    if (parsed.logged_in_at) {
+      const age = Date.now() - new Date(parsed.logged_in_at).getTime()
+      if (age > SESSION_DAYS * 24 * 60 * 60 * 1000) {
+        localStorage.removeItem(STORAGE_KEY)
+        return null
+      }
+    }
+    return parsed
   } catch { /* corrupt localStorage */ }
   return null
 }
@@ -90,6 +101,7 @@ function useAuthInternal() {
 
   // Quick setup — just pick a state and go
   const setupLocal = useCallback((stateCode, displayName = 'Counter') => {
+    const now = new Date().toISOString()
     const prof = {
       user_id: 'local',
       display_name: displayName,
@@ -97,8 +109,9 @@ function useAuthInternal() {
       state_code: stateCode,
       is_premium: false,
       alert_target: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      logged_in_at: now,
+      created_at: now,
+      updated_at: now,
     }
     saveLocalProfile(prof)
     setUser({ id: 'local', email: 'local' })

@@ -183,15 +183,62 @@ export default async function handler(req, res) {
       }))
     } catch { /* admin API may not be available */ }
 
+    // Build unified user list — merge auth, profiles, waitlist
+    const profileMap = {}
+    for (const p of (recentSignups || [])) profileMap[p.user_id] = p
+    const authEmailMap = {}
+    for (const a of authUsers) authEmailMap[a.id] = a.email
+
+    const allUsers = []
+
+    // Google/Pro users (auth + profile)
+    for (const a of authUsers) {
+      const p = profileMap[a.id] || {}
+      allUsers.push({
+        id: a.id,
+        name: p.display_name || p.full_name || a.email?.split('@')[0] || 'Unknown',
+        email: a.email,
+        type: p.is_premium ? 'PRO' : 'GOOGLE',
+        state_code: p.state_code || null,
+        subscription_status: p.subscription_status || null,
+        created_at: a.created_at,
+        last_sign_in: a.last_sign_in,
+        source: a.provider,
+      })
+    }
+
+    // Waitlist-only users (not in auth)
+    const authEmails = new Set(authUsers.map(a => a.email?.toLowerCase()))
+    for (const w of recentWaitlist) {
+      if (!authEmails.has(w.email?.toLowerCase())) {
+        allUsers.push({
+          id: `waitlist-${w.email}`,
+          name: w.name || 'Anonymous',
+          email: w.email,
+          type: 'FREE',
+          state_code: null,
+          subscription_status: null,
+          created_at: w.created_at,
+          last_sign_in: null,
+          source: w.source || 'landing',
+        })
+      }
+    }
+
+    // Sort all by created_at descending
+    allUsers.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+
     res.status(200).json({
-      totalUsers: totalUsers || 0,
+      totalUsers: (totalUsers || 0) + waitlistCount,
       premiumUsers: premiumUsers || 0,
-      freeUsers: (totalUsers || 0) - (premiumUsers || 0),
+      googleUsers: authUsers.length,
+      freeUsers: waitlistCount,
       signupsWeek: signupsWeek || 0,
       signupsMonth: signupsMonth || 0,
       visitorCount,
       waitlistCount,
       totalSessions,
+      allUsers,
       recentSignups: recentSignups || [],
       recentWaitlist,
       authUsers,
