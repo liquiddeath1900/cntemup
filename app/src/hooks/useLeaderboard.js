@@ -3,11 +3,11 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 // Demo fallback for local dev (Vercel API routes don't run in vite dev)
 const DEMO_FALLBACK = {
   rankings: [
-    { display_name: 'BottleKing_NYC', total_count: 27340, is_premium: true },
-    { display_name: 'EcoWarrior', total_count: 14200, is_premium: true },
-    { display_name: 'CanCrusher99', total_count: 8750, is_premium: false },
-    { display_name: 'GreenMachine', total_count: 5100, is_premium: true },
-    { display_name: 'RecycleQueen', total_count: 3400, is_premium: false },
+    { display_name: 'BottleKing_NYC', total_count: 27340, is_premium: true, is_verified: true },
+    { display_name: 'EcoWarrior', total_count: 14200, is_premium: true, is_verified: false },
+    { display_name: 'CanCrusher99', total_count: 8750, is_premium: false, is_verified: true },
+    { display_name: 'GreenMachine', total_count: 5100, is_premium: true, is_verified: false },
+    { display_name: 'RecycleQueen', total_count: 3400, is_premium: false, is_verified: false },
   ],
   globalStats: { totalBottles: 63860, totalCounters: 10 },
   isDemo: true,

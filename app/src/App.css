@@ -2917,6 +2917,100 @@ body {
   text-align: center;
 }
 
+/* Google sign-in CTA on leaderboard */
+.leaderboard-google-cta {
+  text-align: center;
+  padding: 16px 12px;
+  margin-top: 8px;
+  border: 2px solid var(--gb-screen-dark);
+  border-radius: 8px;
+  background: rgba(155, 188, 15, 0.06);
+}
+.leaderboard-google-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: var(--gb-screen-light);
+  margin: 0 0 12px;
+}
+.leaderboard-google-btn {
+  display: inline-block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #1d1d1d;
+  background: var(--gb-screen-light);
+  padding: 10px 20px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.leaderboard-google-btn:hover {
+  opacity: 0.85;
+}
+.leaderboard-google-sub {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: var(--gb-text-dim);
+  margin: 10px 0 0;
+}
+
+/* Trust badges — distinct from rank badges */
+.trust-badge {
+  display: inline-block;
+  font-size: 8px;
+  margin-left: 3px;
+  vertical-align: middle;
+}
+
+/* Badge legend below leaderboard */
+.leaderboard-legend {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 10px 0 4px;
+}
+.legend-item {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: var(--gb-text-dim);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Admin verify/reject buttons */
+.admin-verify-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.admin-verify-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  padding: 6px 12px;
+  border: 2px solid;
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+}
+.admin-verify-btn.approve {
+  color: #22c55e;
+  border-color: #22c55e;
+}
+.admin-verify-btn.approve:hover {
+  background: rgba(34, 197, 94, 0.15);
+}
+.admin-verify-btn.reject {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+.admin-verify-btn.reject:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+.admin-verify-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Leaderboard toggle in Settings */
 .leaderboard-toggle-row {
   display: flex;

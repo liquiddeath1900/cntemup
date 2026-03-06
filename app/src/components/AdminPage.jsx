@@ -1,13 +1,32 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAdminStats } from '../hooks/useAdminStats'
+import { supabase } from '../lib/supabase'
 
 // Admin dashboard — full visibility into all users
 export function AdminPage() {
   const { stats, loading, error, refresh } = useAdminStats()
   const [expandedId, setExpandedId] = useState(null)
+  const [verifyingId, setVerifyingId] = useState(null)
 
   const toggle = (id) => setExpandedId(prev => prev === id ? null : id)
+
+  const handleVerify = async (verificationId, action) => {
+    setVerifyingId(verificationId)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/verify-slip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ verification_id: verificationId, action }),
+      })
+      if (res.ok) refresh()
+    } catch { /* network error */ }
+    setVerifyingId(null)
+  }
 
   if (loading) {
     return (
@@ -123,6 +142,22 @@ export function AdminPage() {
                             </a>
                           </div>
                           <div>Session: {v.session_id}</div>
+                          <div className="admin-verify-actions" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              className="admin-verify-btn approve"
+                              disabled={verifyingId === v.id}
+                              onClick={() => handleVerify(v.id, 'approve')}
+                            >
+                              {verifyingId === v.id ? '...' : 'APPROVE'}
+                            </button>
+                            <button
+                              className="admin-verify-btn reject"
+                              disabled={verifyingId === v.id}
+                              onClick={() => handleVerify(v.id, 'reject')}
+                            >
+                              REJECT
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>

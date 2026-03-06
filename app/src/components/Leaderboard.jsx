@@ -111,7 +111,8 @@ export function Leaderboard() {
                         <span className="leaderboard-row-pos">#{position}</span>
                         <span className="leaderboard-row-name">
                           {entry.display_name}
-                          {entry.is_premium && <span className="pro-badge-inline">⭐</span>}
+                          {entry.is_verified && <span className="trust-badge verified" title="Verified">✅</span>}
+                          {entry.is_premium && <span className="trust-badge pro" title="Pro">⭐</span>}
                         </span>
                         <span className="leaderboard-row-count">
                           {entry.total_count.toLocaleString()}
@@ -169,12 +170,23 @@ export function Leaderboard() {
 
         {/* Join CTA / Toggle */}
         {isGoogleAuth ? (
-          <button className="leaderboard-cta" onClick={handleToggle}>
-            {isOptedIn ? '🛡️ LEAVE THE BOARD' : '🛡️ JOIN THE BOARD'}
-          </button>
+          <>
+            <button className="leaderboard-cta" onClick={handleToggle}>
+              {isOptedIn ? '🛡️ LEAVE THE BOARD' : '🛡️ JOIN THE BOARD'}
+            </button>
+            {/* Badge legend */}
+            <div className="leaderboard-legend">
+              <span className="legend-item"><span className="trust-badge verified">✅</span> Verified</span>
+              <span className="legend-item"><span className="trust-badge pro">⭐</span> Pro</span>
+            </div>
+          </>
         ) : (
-          <div className="leaderboard-hint">
-            Sign in with Google to join the leaderboard
+          <div className="leaderboard-google-cta">
+            <p className="leaderboard-google-title">WANT ON THE BOARD?</p>
+            <Link to="/auth" className="leaderboard-google-btn">
+              SIGN IN WITH GOOGLE
+            </Link>
+            <p className="leaderboard-google-sub">Compete, earn ranks, get verified</p>
           </div>
         )}
       </main>

@@ -6,16 +6,16 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 // Demo seed data for testing with zero users
 const DEMO_DATA = {
   rankings: [
-    { display_name: 'BottleKing_NYC', total_count: 27340, is_premium: true },
-    { display_name: 'EcoWarrior', total_count: 14200, is_premium: true },
-    { display_name: 'CanCrusher99', total_count: 8750, is_premium: false },
-    { display_name: 'GreenMachine', total_count: 5100, is_premium: true },
-    { display_name: 'RecycleQueen', total_count: 3400, is_premium: false },
-    { display_name: 'TrashPanda', total_count: 2100, is_premium: false },
-    { display_name: 'NickelHunter', total_count: 1800, is_premium: true },
-    { display_name: 'CanMan_BK', total_count: 900, is_premium: false },
-    { display_name: 'BottleBoss', total_count: 450, is_premium: false },
-    { display_name: 'NewCounter', total_count: 120, is_premium: false },
+    { display_name: 'BottleKing_NYC', total_count: 27340, is_premium: true, is_verified: true },
+    { display_name: 'EcoWarrior', total_count: 14200, is_premium: true, is_verified: false },
+    { display_name: 'CanCrusher99', total_count: 8750, is_premium: false, is_verified: true },
+    { display_name: 'GreenMachine', total_count: 5100, is_premium: true, is_verified: false },
+    { display_name: 'RecycleQueen', total_count: 3400, is_premium: false, is_verified: false },
+    { display_name: 'TrashPanda', total_count: 2100, is_premium: false, is_verified: false },
+    { display_name: 'NickelHunter', total_count: 1800, is_premium: true, is_verified: true },
+    { display_name: 'CanMan_BK', total_count: 900, is_premium: false, is_verified: false },
+    { display_name: 'BottleBoss', total_count: 450, is_premium: false, is_verified: false },
+    { display_name: 'NewCounter', total_count: 120, is_premium: false, is_verified: false },
   ],
   globalStats: { totalBottles: 63860, totalCounters: 10 },
   isDemo: true,
@@ -56,7 +56,7 @@ export default async function handler(req, res) {
     // Get all users who opted into leaderboard
     const { data: profiles, error: profileError } = await supabase
       .from('profiles')
-      .select('user_id, display_name, is_premium, show_on_leaderboard')
+      .select('user_id, display_name, is_premium, is_verified, show_on_leaderboard')
       .eq('show_on_leaderboard', true)
 
     if (profileError) throw profileError
@@ -86,15 +86,25 @@ export default async function handler(req, res) {
       countMap[s.user_id] = (countMap[s.user_id] || 0) + (s.count || 0)
     }
 
+    // Trust tier weights — used as tiebreaker when counts are equal
+    // Verified > Pro > Google (all Google auth) > Free
+    function trustWeight(p) {
+      if (p.is_verified) return 3
+      if (p.is_premium) return 2
+      return 1 // Google auth (all profiles are Google auth currently)
+    }
+
     // Build rankings — no emails, no user IDs in response
     const rankings = profiles
       .map(p => ({
         display_name: p.display_name || 'Player',
         total_count: countMap[p.user_id] || 0,
         is_premium: p.is_premium || false,
+        is_verified: p.is_verified || false,
+        trust_tier: trustWeight(p),
       }))
-      .filter(r => r.total_count > 0) // Hide zero-count users in weekly view
-      .sort((a, b) => b.total_count - a.total_count)
+      .filter(r => r.total_count > 0)
+      .sort((a, b) => b.total_count - a.total_count || b.trust_tier - a.trust_tier)
       .slice(0, 50)
 
     // Global stats (all users, all time, not just opted-in)
