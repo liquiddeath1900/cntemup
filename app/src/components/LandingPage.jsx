@@ -260,6 +260,12 @@ export function LandingPage() {
             <span>📏</span> Keep items 6-18 inches from camera for best results.
           </div>
           <div className="setup-protip">
+            <span>📐</span> Use a tripod or prop your phone so it stays completely still.
+          </div>
+          <div className="setup-protip">
+            <span>🎨</span> Use a solid color background for the cleanest detection.
+          </div>
+          <div className="setup-protip">
             <span>±</span> Miscounted? Use +/− buttons to fix it manually.
           </div>
           <div className="setup-protip">

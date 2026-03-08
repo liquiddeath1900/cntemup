@@ -176,7 +176,7 @@ export function Settings() {
           {isPremium ? (
             <div className="settings-plan-card settings-plan-pro">
               <div className="settings-plan-name">PRO</div>
-              <div className="settings-plan-price">$1.99/mo</div>
+              <div className="settings-plan-price">$0.99/mo</div>
               <div className="settings-plan-status">
                 {subscriptionStatus === 'active' ? 'ACTIVE' : subscriptionStatus?.toUpperCase()}
               </div>
@@ -195,7 +195,7 @@ export function Settings() {
                 disabled={checkoutLoading}
               >
                 {/* eslint-disable-next-line no-nested-ternary */}
-                {isLocal ? 'SIGN IN WITH GOOGLE TO GO PRO' : (checkoutLoading ? 'LOADING...' : 'GO PRO — $1.99/MO')}
+                {isLocal ? 'SIGN IN WITH GOOGLE TO GO PRO' : (checkoutLoading ? 'LOADING...' : 'GO PRO — $0.99/MO')}
               </button>
               {upgradeError && (
                 <div style={{ color: '#ff6b6b', fontSize: 'var(--font-xs)', marginTop: '8px', wordBreak: 'break-all' }}>
@@ -206,7 +206,7 @@ export function Settings() {
                 <li>See your money grow as you count</li>
                 <li>Bag alert / target limit</li>
                 <li>45-day session history</li>
-                <li>All for just $1.99/mo</li>
+                <li>All for just $0.99/mo</li>
               </ul>
             </div>
           )}

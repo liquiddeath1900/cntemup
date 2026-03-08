@@ -40,10 +40,10 @@ export function PremiumGate({ children, feature = 'this feature' }) {
       <p className="premium-gate-text">
         {isLocal
           ? 'Sign in with Google to unlock Pro features'
-          : `Unlock ${feature} with CNTEM'UP Pro for just $1.99/mo`}
+          : `Unlock ${feature} with CNTEM'UP Pro for just $0.99/mo`}
       </p>
       <button className="premium-gate-btn" onClick={handleUpgrade}>
-        {isLocal ? 'SIGN IN WITH GOOGLE' : 'GO PRO — $1.99/MO'}
+        {isLocal ? 'SIGN IN WITH GOOGLE' : 'GO PRO — $0.99/MO'}
       </button>
     </div>
   )
