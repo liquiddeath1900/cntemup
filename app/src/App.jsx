@@ -76,6 +76,8 @@ function CounterPage() {
   const [isRunning, setIsRunning] = useState(false)
   const [savingSession, setSavingSession] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [resetConfirm, setResetConfirm] = useState(false)
+  const resetTimerRef = useRef(null)
   const [showAlertModal, setShowAlertModal] = useState(false)
   const [alertFired, setAlertFired] = useState(false)
   const [rankUpInfo, setRankUpInfo] = useState(null)
@@ -150,8 +152,21 @@ function CounterPage() {
     stopCamera()
   }
 
-  const handleReset = () => {
+  const handleResetAll = () => {
+    if (!resetConfirm) {
+      // First tap — show "SURE?" for 2 seconds
+      setResetConfirm(true)
+      resetTimerRef.current = setTimeout(() => setResetConfirm(false), 2000)
+      return
+    }
+    // Second tap — actually reset everything
+    clearTimeout(resetTimerRef.current)
+    setResetConfirm(false)
     setCount(0)
+    setSessionCount(0)
+    setAlertFired(false)
+    setShowAlertModal(false)
+    sessionStartRef.current = null
   }
 
   const handleClearSession = () => {
@@ -204,6 +219,7 @@ function CounterPage() {
     return () => {
       stopTripwire()
       stopCamera()
+      clearTimeout(resetTimerRef.current)
     }
   }, [stopTripwire, stopCamera])
 
@@ -369,20 +385,22 @@ function CounterPage() {
         </div>
 
         <div className="gb-action-row">
-          <button className="gb-action-btn gb-reset-btn" onClick={handleReset}>RESET</button>
-        </div>
+          <button
+            className={`gb-action-btn gb-reset-btn ${resetConfirm ? 'gb-reset-confirm' : ''}`}
+            onClick={handleResetAll}
+          >
+            {resetConfirm ? 'SURE?' : 'RESET ALL'}
+          </button>
 
-        <div className="gb-action-row">
           {sessionCount > 0 && (
             <button
               className="gb-action-btn gb-save-btn"
               onClick={handleSaveSession}
               disabled={savingSession}
             >
-              {savingSession ? 'SAVING' : 'SAVE'}
+              {savingSession ? 'SAVING...' : 'SAVE'}
             </button>
           )}
-          <button className="gb-clear-btn" onClick={handleClearSession}>CLEAR</button>
         </div>
       </div>
 

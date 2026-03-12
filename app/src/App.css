@@ -438,10 +438,24 @@ body {
   background: linear-gradient(180deg, #8a8a8a, #6a6a6a);
   color: #ddd;
   box-shadow: 0 3px 0 #444;
+  transition: transform 0.1s, background 0.15s, box-shadow 0.15s;
 }
 
 .gb-reset-btn:active {
   box-shadow: 0 1px 0 #444;
+}
+
+/* Confirmation state — pulses warning color */
+.gb-reset-confirm {
+  background: linear-gradient(180deg, #c8384a, #a02838);
+  color: #fff;
+  box-shadow: 0 3px 0 #7a1f2a;
+  animation: gb-confirm-pulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes gb-confirm-pulse {
+  from { opacity: 1; }
+  to { opacity: 0.7; }
 }
 
 .gb-stop-btn {
@@ -455,24 +469,25 @@ body {
 }
 
 .gb-save-btn {
-  background: linear-gradient(180deg, #2d8a5e, #1a6b42);
-  color: white;
-  box-shadow: 0 3px 0 #0f4a2d;
+  background: linear-gradient(180deg, #3adf7f, #2d8a5e);
+  color: #0a2e1a;
+  font-weight: bold;
+  box-shadow:
+    0 4px 0 #1a6b42,
+    0 0 12px rgba(58, 223, 127, 0.3);
+  padding: clamp(8px, 2vw, 12px) clamp(20px, 5vw, 32px);
 }
 
 .gb-save-btn:active {
-  box-shadow: 0 1px 0 #0f4a2d;
+  box-shadow: 0 1px 0 #1a6b42;
 }
 
-.gb-clear-btn {
-  font-family: 'Press Start 2P', monospace;
-  font-size: var(--font-xs);
-  background: none;
-  border: none;
-  color: var(--gb-text-dim);
-  cursor: pointer;
-  padding: 4px 8px;
+.gb-save-btn:disabled {
+  opacity: 0.6;
+  box-shadow: 0 3px 0 #1a6b42;
 }
+
+/* .gb-clear-btn removed — RESET ALL handles both counts */
 
 /* ===== MODEL LOADING BAR ===== */
 .gb-loading {
