@@ -24,6 +24,14 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.cntemup.com" }],
+      "destination": "https://cntemup.com/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/app", "destination": "/index.html" },
     { "source": "/settings", "destination": "/index.html" },
