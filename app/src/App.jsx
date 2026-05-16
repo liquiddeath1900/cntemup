@@ -9,10 +9,16 @@ import { Tips } from './components/Tips'
 import { AdminPage } from './components/AdminPage'
 import { Leaderboard } from './components/Leaderboard'
 import { AlertModal } from './components/AlertModal'
+import { NotFound } from './components/NotFound'
 import { RankUpModal } from './components/RankUpModal'
 import { VerifySlipModal } from './components/VerifySlipModal'
 import { useCamera } from './hooks/useCamera'
 import { useTripwire } from './hooks/useTripwire'
+import { useTripwireV2 } from './hooks/useTripwireV2'
+
+// Dev toggle: ?v2=1 in URL switches the counter source to the V2 prototype tripwire.
+// V1 always runs in parallel for side-by-side comparison.
+const USE_V2 = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('v2') === '1'
 import { useAuth } from './hooks/useAuth'
 import { useDepositRules } from './hooks/useDepositRules'
 import { useSound } from './hooks/useSound'
@@ -92,7 +98,11 @@ function CounterPage() {
   const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code, profile?.container_type || 'standard')
   const { muted, toggleMute, playCount, playAlarm, playBoot } = useSound()
   const { videoRef, isStreaming, videoReady, error: cameraError, debugLog, devices, startCamera, stopCamera, switchCamera, handleTapToPlay } = useCamera()
-  const { startTripwire, stopTripwire, tripwireY, setTripwireY, isTriggered, setOnTrigger } = useTripwire()
+  const v1 = useTripwire()
+  const v2 = useTripwireV2()
+  // Choose which tripwire drives the official count. V1 is the production default.
+  const active = USE_V2 ? v2 : v1
+  const { tripwireY, isTriggered, setOnTrigger } = active
 
   // Wire tripwire trigger → increment count + sound + alert check
   useEffect(() => {
@@ -114,12 +124,14 @@ function CounterPage() {
     })
   }, [setCount, setSessionCount, setOnTrigger, playCount, isPremium, alertTarget, alertFired, playAlarm])
 
-  // Start tripwire when video is ready
+  // Start tripwire when video is ready — always start BOTH in parallel for A/B comparison
   useEffect(() => {
     if (isRunning && videoReady && videoRef.current) {
-      startTripwire(videoRef.current)
+      v1.startTripwire(videoRef.current)
+      v2.startTripwire(videoRef.current)
     }
-  }, [isRunning, videoReady, videoRef, startTripwire])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRunning, videoReady, videoRef])
 
   const handleManualAdd = () => {
     if (!sessionStartRef.current) sessionStartRef.current = Date.now()
@@ -148,7 +160,8 @@ function CounterPage() {
 
   const handleStop = () => {
     setIsRunning(false)
-    stopTripwire()
+    v1.stopTripwire()
+    v2.stopTripwire()
     stopCamera()
   }
 
@@ -214,16 +227,18 @@ function CounterPage() {
     }
   }
 
-  // Cleanup on unmount
+  // Cleanup on unmount — stop both tripwires
   useEffect(() => {
     return () => {
-      stopTripwire()
+      v1.stopTripwire()
+      v2.stopTripwire()
       stopCamera()
       clearTimeout(resetTimerRef.current)
     }
-  }, [stopTripwire, stopCamera])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stopCamera])
 
-  // Drag tripwire line
+  // Drag tripwire line — keep both hooks' Y in sync so they sample the same region
   const handleDragStart = useCallback((e) => {
     e.preventDefault()
     setIsDragging(true)
@@ -234,8 +249,10 @@ function CounterPage() {
     const rect = cameraContainerRef.current.getBoundingClientRect()
     const clientY = e.touches ? e.touches[0].clientY : e.clientY
     const y = Math.max(0.1, Math.min(0.9, (clientY - rect.top) / rect.height))
-    setTripwireY(y)
-  }, [isDragging, setTripwireY])
+    v1.setTripwireY(y)
+    v2.setTripwireY(y)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDragging])
 
   const handleDragEnd = useCallback(() => {
     setIsDragging(false)
@@ -323,8 +340,19 @@ function CounterPage() {
                 onMouseDown={handleDragStart}
                 onTouchStart={handleDragStart}
               >
-                <span className="tripwire-label">TRIPWIRE</span>
+                <span className="tripwire-label">TRIPWIRE{USE_V2 ? ' V2' : ''}</span>
                 <span className="tripwire-handle" />
+              </div>
+            )}
+
+            {/* Dev A/B overlay — only when ?v2=1 in URL */}
+            {USE_V2 && isStreaming && (
+              <div className="tripwire-ab-overlay">
+                <div>V1: {v1.triggerCount}</div>
+                <div>V2: {v2.triggerCount}</div>
+                <div className="ab-diag">shake-rej: {v2.shakeRejects}</div>
+                <div className="ab-diag">dir-rej: {v2.directionRejects}</div>
+                <div className="ab-active">[active: V2]</div>
               </div>
             )}
 
@@ -470,6 +498,7 @@ function App() {
         <Route path="/tips" element={<Tips />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/admin" element={<AdminRoute element={<AdminPage />} />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   )
