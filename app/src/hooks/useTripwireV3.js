@@ -14,6 +14,7 @@ export function useTripwireV3() {
   // Diagnostics for dev overlay
   const [shakeRejects, setShakeRejects] = useState(0)
   const [expiredPrimes, setExpiredPrimes] = useState(0)
+  const [upwardRejects, setUpwardRejects] = useState(0)
 
   const rafRef = useRef(null)
   const canvasRef = useRef(null)
@@ -32,15 +33,21 @@ export function useTripwireV3() {
   // can't fire multiple times even if it activates multiple cells
   const lastFireAtRef = useRef(0)
 
+  // Per-cell timestamp of when the BOTTOM strip was active while the TOP was NOT.
+  // If this is recent when we'd otherwise prime a top cluster, the motion is
+  // going UPWARD through the gate (bottom hit first) and we reject the prime.
+  const lastBotAloneRef = useRef(null)
+
   // ── Config ──────────────────────────────────────────────────────
   const STRIP_HEIGHT = 22         // px tall per gate line strip
   const GATE_HALF_OFFSET = 0.05   // each line sits 5% of frame above/below tripwireY → 10% gate
   const N_CELLS = 8               // horizontal cells across the frame
   const CHANGE_THRESHOLD = 28     // per-channel brightness delta = "changed"
-  const CELL_TRIGGER_PERCENT = 0.32 // 32% of cell's pixels changed = cell is active (stricter)
+  const CELL_TRIGGER_PERCENT = 0.26 // % of cell's pixels changed = cell is active
   const MAX_TRANSIT_MS = 500      // max time top→bottom for a real drop
   const MAX_PRIMED_AGE_MS = 700   // primed events expire after this
   const GLOBAL_COOLDOWN_MS = 200  // min time between any two fires
+  const REVERSE_LOOKBACK_MS = 300 // if bottom was active alone within this window, reject top prime (upward motion)
   const TARGET_FPS = 30
   const CORNER_SIZE = 60
   const SHAKE_PERCENT = 0.07
@@ -182,6 +189,19 @@ export function useTripwireV3() {
 
         const now = timestamp
 
+        // Update per-cell direction memory: mark cells where bottom is active
+        // but top is NOT — this is the signature of an upward motion's first phase.
+        const lastBotAlone = lastBotAloneRef.current
+        if (lastBotAlone) {
+          for (let c = 0; c < N_CELLS; c++) {
+            const topActive = topCells[c] >= CELL_TRIGGER_PERCENT
+            const botActive = botCells[c] >= CELL_TRIGGER_PERCENT
+            if (botActive && !topActive) {
+              lastBotAlone[c] = now
+            }
+          }
+        }
+
         // Phase 1: try to resolve any bottom cluster against an existing primed event.
         // Enforce a global cooldown so a single physical object can't fire twice in a row.
         const consumedPrimes = new Set()
@@ -219,13 +239,29 @@ export function useTripwireV3() {
         // Phase 2: register top clusters as new primed events.
         // Skip if: an alive prime already overlaps, OR we just fired and the
         // cooldown is still active (prevents the tail of one bottle from priming
-        // a phantom event as it exits the gate).
+        // a phantom event as it exits the gate), OR this region had bottom-alone
+        // activity recently (which means the motion is going UP through the gate).
         if (!cooldownActive || !firedThisFrame) {
           for (const top of topClusters) {
             const overlapsExisting = primedEventsRef.current.some(p => clustersOverlap(p, top))
-            if (!overlapsExisting) {
-              primedEventsRef.current.push({ left: top.left, right: top.right, primedAt: now })
+            if (overlapsExisting) continue
+
+            // Direction check: any cell in this cluster recently saw bottom-alone activity?
+            let isUpward = false
+            if (lastBotAlone) {
+              for (let c = top.left; c <= top.right; c++) {
+                if (now - lastBotAlone[c] < REVERSE_LOOKBACK_MS && lastBotAlone[c] > 0) {
+                  isUpward = true
+                  break
+                }
+              }
             }
+            if (isUpward) {
+              setUpwardRejects(n => n + 1)
+              continue
+            }
+
+            primedEventsRef.current.push({ left: top.left, right: top.right, primedAt: now })
           }
         }
       }
@@ -255,6 +291,7 @@ export function useTripwireV3() {
     prevBottomRef.current = null
     primedEventsRef.current = []
     lastFireAtRef.current = 0
+    lastBotAloneRef.current = new Array(N_CELLS).fill(0)
     lastFrameTime.current = 0
     setIsRunning(true)
     rafRef.current = requestAnimationFrame((ts) => processFrameRef.current(video, ts))
@@ -276,6 +313,7 @@ export function useTripwireV3() {
     setTriggerCount(0)
     setShakeRejects(0)
     setExpiredPrimes(0)
+    setUpwardRejects(0)
   }, [])
 
   useEffect(() => {
@@ -296,6 +334,7 @@ export function useTripwireV3() {
     setOnTrigger,
     shakeRejects,
     expiredPrimes,
+    upwardRejects,
     // For visual gate rendering in App.jsx
     gateHalfOffset: GATE_HALF_OFFSET,
   }

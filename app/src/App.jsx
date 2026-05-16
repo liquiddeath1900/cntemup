@@ -389,6 +389,7 @@ function CounterPage() {
                 <div className="ab-diag">v2 dir-rej: {v2.directionRejects}</div>
                 <div className="ab-diag">v3 shake-rej: {v3.shakeRejects}</div>
                 <div className="ab-diag">v3 expired: {v3.expiredPrimes}</div>
+                <div className="ab-diag">v3 upward-rej: {v3.upwardRejects}</div>
                 <div className="ab-active">[active: {USE_V3 && 'V3'}{!USE_V3 && USE_V2 && 'V2'}{!USE_V3 && !USE_V2 && 'V1'}]</div>
               </div>
             )}
