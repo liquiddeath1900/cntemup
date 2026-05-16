@@ -343,11 +343,11 @@ function CounterPage() {
               autoPlay
             />
 
-            {/* V3 gate (two parallel lines) — only when ?v3=1 active */}
+            {/* V3 gate (two parallel lines) — only when ?v3=1 active. Both lines flash on fire. */}
             {isStreaming && USE_V3 && (
               <>
                 <div
-                  className="tripwire-line tripwire-gate-line"
+                  className={`tripwire-line tripwire-gate-line ${isTriggered ? 'tripwire-trigger-flash' : ''}`}
                   style={{ top: `${(tripwireY - v3.gateHalfOffset) * 100}%` }}
                   onMouseDown={handleDragStart}
                   onTouchStart={handleDragStart}

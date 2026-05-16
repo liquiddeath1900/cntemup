@@ -28,17 +28,22 @@ export function useTripwireV3() {
   // Each: { leftCell, rightCell, primedAt }
   const primedEventsRef = useRef([])
 
+  // Timestamp of last fire — enforces a global cooldown so one physical bottle
+  // can't fire multiple times even if it activates multiple cells
+  const lastFireAtRef = useRef(0)
+
   // ── Config ──────────────────────────────────────────────────────
   const STRIP_HEIGHT = 22         // px tall per gate line strip
   const GATE_HALF_OFFSET = 0.05   // each line sits 5% of frame above/below tripwireY → 10% gate
   const N_CELLS = 8               // horizontal cells across the frame
-  const CHANGE_THRESHOLD = 25     // per-channel brightness delta = "changed"
-  const CELL_TRIGGER_PERCENT = 0.18 // 18% of cell's pixels changed = cell is active
-  const MAX_TRANSIT_MS = 600      // max time top→bottom for a real drop
-  const MAX_PRIMED_AGE_MS = 800   // primed events expire after this
+  const CHANGE_THRESHOLD = 28     // per-channel brightness delta = "changed"
+  const CELL_TRIGGER_PERCENT = 0.32 // 32% of cell's pixels changed = cell is active (stricter)
+  const MAX_TRANSIT_MS = 500      // max time top→bottom for a real drop
+  const MAX_PRIMED_AGE_MS = 700   // primed events expire after this
+  const GLOBAL_COOLDOWN_MS = 200  // min time between any two fires
   const TARGET_FPS = 30
   const CORNER_SIZE = 60
-  const SHAKE_PERCENT = 0.08
+  const SHAKE_PERCENT = 0.07
 
   const setOnTrigger = useCallback((fn) => {
     onTriggerRef.current = fn
@@ -177,22 +182,31 @@ export function useTripwireV3() {
 
         const now = timestamp
 
-        // Phase 1: try to resolve any bottom cluster against an existing primed event
+        // Phase 1: try to resolve any bottom cluster against an existing primed event.
+        // Enforce a global cooldown so a single physical object can't fire twice in a row.
         const consumedPrimes = new Set()
         let firedThisFrame = false
-        for (const bot of botClusters) {
-          for (let pi = 0; pi < primedEventsRef.current.length; pi++) {
-            if (consumedPrimes.has(pi)) continue
-            const prime = primedEventsRef.current[pi]
-            const age = now - prime.primedAt
-            if (age > MAX_TRANSIT_MS) continue
-            if (clustersOverlap(prime, bot)) {
-              setTriggerCount(n => n + 1)
-              onTriggerRef.current?.()
-              consumedPrimes.add(pi)
-              firedThisFrame = true
-              break // one bottom cluster fires at most one prime
+        const sinceLastFire = now - lastFireAtRef.current
+        const cooldownActive = sinceLastFire < GLOBAL_COOLDOWN_MS
+        if (!cooldownActive) {
+          for (const bot of botClusters) {
+            let fired = false
+            for (let pi = 0; pi < primedEventsRef.current.length; pi++) {
+              if (consumedPrimes.has(pi)) continue
+              const prime = primedEventsRef.current[pi]
+              const age = now - prime.primedAt
+              if (age > MAX_TRANSIT_MS) continue
+              if (clustersOverlap(prime, bot)) {
+                setTriggerCount(n => n + 1)
+                onTriggerRef.current?.()
+                consumedPrimes.add(pi)
+                firedThisFrame = true
+                lastFireAtRef.current = now
+                fired = true
+                break // one bottom cluster fires at most one prime
+              }
             }
+            if (fired) break // one fire per frame to respect cooldown
           }
         }
         if (firedThisFrame) {
@@ -202,13 +216,16 @@ export function useTripwireV3() {
         // Drop consumed primes
         primedEventsRef.current = primedEventsRef.current.filter((_, i) => !consumedPrimes.has(i))
 
-        // Phase 2: register top clusters as new primed events,
-        // skipping any that overlap an already-alive prime (so a slow bottle
-        // sitting on the top line doesn't keep adding new primes)
-        for (const top of topClusters) {
-          const overlapsExisting = primedEventsRef.current.some(p => clustersOverlap(p, top))
-          if (!overlapsExisting) {
-            primedEventsRef.current.push({ left: top.left, right: top.right, primedAt: now })
+        // Phase 2: register top clusters as new primed events.
+        // Skip if: an alive prime already overlaps, OR we just fired and the
+        // cooldown is still active (prevents the tail of one bottle from priming
+        // a phantom event as it exits the gate).
+        if (!cooldownActive || !firedThisFrame) {
+          for (const top of topClusters) {
+            const overlapsExisting = primedEventsRef.current.some(p => clustersOverlap(p, top))
+            if (!overlapsExisting) {
+              primedEventsRef.current.push({ left: top.left, right: top.right, primedAt: now })
+            }
           }
         }
       }
@@ -237,6 +254,7 @@ export function useTripwireV3() {
     prevTopRef.current = null
     prevBottomRef.current = null
     primedEventsRef.current = []
+    lastFireAtRef.current = 0
     lastFrameTime.current = 0
     setIsRunning(true)
     rafRef.current = requestAnimationFrame((ts) => processFrameRef.current(video, ts))
