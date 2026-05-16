@@ -15,10 +15,14 @@ import { VerifySlipModal } from './components/VerifySlipModal'
 import { useCamera } from './hooks/useCamera'
 import { useTripwire } from './hooks/useTripwire'
 import { useTripwireV2 } from './hooks/useTripwireV2'
+import { useTripwireV3 } from './hooks/useTripwireV3'
 
-// Dev toggle: ?v2=1 in URL switches the counter source to the V2 prototype tripwire.
-// V1 always runs in parallel for side-by-side comparison.
-const USE_V2 = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('v2') === '1'
+// Dev toggles: ?v2=1 or ?v3=1 picks which prototype drives the count.
+// All three (V1, V2, V3) always run in parallel for side-by-side comparison.
+const SEARCH = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+const USE_V2 = SEARCH?.get('v2') === '1'
+const USE_V3 = SEARCH?.get('v3') === '1'
+const DEV_OVERLAY = USE_V2 || USE_V3
 import { useAuth } from './hooks/useAuth'
 import { useDepositRules } from './hooks/useDepositRules'
 import { useSound } from './hooks/useSound'
@@ -100,8 +104,11 @@ function CounterPage() {
   const { videoRef, isStreaming, videoReady, error: cameraError, debugLog, devices, startCamera, stopCamera, switchCamera, handleTapToPlay } = useCamera()
   const v1 = useTripwire()
   const v2 = useTripwireV2()
+  const v3 = useTripwireV3()
   // Choose which tripwire drives the official count. V1 is the production default.
-  const active = USE_V2 ? v2 : v1
+  let active = v1
+  if (USE_V3) active = v3
+  else if (USE_V2) active = v2
   const { tripwireY, isTriggered, setOnTrigger } = active
 
   // Wire tripwire trigger → increment count + sound + alert check
@@ -124,11 +131,12 @@ function CounterPage() {
     })
   }, [setCount, setSessionCount, setOnTrigger, playCount, isPremium, alertTarget, alertFired, playAlarm])
 
-  // Start tripwire when video is ready — always start BOTH in parallel for A/B comparison
+  // Start all three tripwires in parallel when video is ready (for A/B/C comparison)
   useEffect(() => {
     if (isRunning && videoReady && videoRef.current) {
       v1.startTripwire(videoRef.current)
       v2.startTripwire(videoRef.current)
+      v3.startTripwire(videoRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, videoReady, videoRef])
@@ -162,6 +170,7 @@ function CounterPage() {
     setIsRunning(false)
     v1.stopTripwire()
     v2.stopTripwire()
+    v3.stopTripwire()
     stopCamera()
   }
 
@@ -227,11 +236,12 @@ function CounterPage() {
     }
   }
 
-  // Cleanup on unmount — stop both tripwires
+  // Cleanup on unmount — stop all tripwires
   useEffect(() => {
     return () => {
       v1.stopTripwire()
       v2.stopTripwire()
+      v3.stopTripwire()
       stopCamera()
       clearTimeout(resetTimerRef.current)
     }
@@ -251,6 +261,7 @@ function CounterPage() {
     const y = Math.max(0.1, Math.min(0.9, (clientY - rect.top) / rect.height))
     v1.setTripwireY(y)
     v2.setTripwireY(y)
+    v3.setTripwireY(y)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDragging])
 
@@ -332,8 +343,31 @@ function CounterPage() {
               autoPlay
             />
 
-            {/* Tripwire line — visible when camera is running */}
-            {isStreaming && (
+            {/* V3 gate (two parallel lines) — only when ?v3=1 active */}
+            {isStreaming && USE_V3 && (
+              <>
+                <div
+                  className="tripwire-line tripwire-gate-line"
+                  style={{ top: `${(tripwireY - v3.gateHalfOffset) * 100}%` }}
+                  onMouseDown={handleDragStart}
+                  onTouchStart={handleDragStart}
+                >
+                  <span className="tripwire-label">GATE TOP</span>
+                </div>
+                <div
+                  className={`tripwire-line tripwire-gate-line ${isTriggered ? 'tripwire-trigger-flash' : ''}`}
+                  style={{ top: `${(tripwireY + v3.gateHalfOffset) * 100}%` }}
+                  onMouseDown={handleDragStart}
+                  onTouchStart={handleDragStart}
+                >
+                  <span className="tripwire-label">GATE BOT</span>
+                  <span className="tripwire-handle" />
+                </div>
+              </>
+            )}
+
+            {/* V1/V2 single tripwire line — when V3 is off */}
+            {isStreaming && !USE_V3 && (
               <div
                 className={`tripwire-line ${isTriggered ? 'tripwire-trigger-flash' : ''}`}
                 style={{ top: `${tripwireY * 100}%` }}
@@ -345,14 +379,17 @@ function CounterPage() {
               </div>
             )}
 
-            {/* Dev A/B overlay — only when ?v2=1 in URL */}
-            {USE_V2 && isStreaming && (
+            {/* Dev A/B/C overlay — when ?v2=1 or ?v3=1 in URL */}
+            {DEV_OVERLAY && isStreaming && (
               <div className="tripwire-ab-overlay">
                 <div>V1: {v1.triggerCount}</div>
                 <div>V2: {v2.triggerCount}</div>
-                <div className="ab-diag">shake-rej: {v2.shakeRejects}</div>
-                <div className="ab-diag">dir-rej: {v2.directionRejects}</div>
-                <div className="ab-active">[active: V2]</div>
+                <div>V3: {v3.triggerCount}</div>
+                <div className="ab-diag">v2 shake-rej: {v2.shakeRejects}</div>
+                <div className="ab-diag">v2 dir-rej: {v2.directionRejects}</div>
+                <div className="ab-diag">v3 shake-rej: {v3.shakeRejects}</div>
+                <div className="ab-diag">v3 expired: {v3.expiredPrimes}</div>
+                <div className="ab-active">[active: {USE_V3 && 'V3'}{!USE_V3 && USE_V2 && 'V2'}{!USE_V3 && !USE_V2 && 'V1'}]</div>
               </div>
             )}
 
