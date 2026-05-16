@@ -1673,7 +1673,8 @@ body {
 }
 
 /* ===== V3 GATE (two parallel lines) ===== */
-.tripwire-gate-line {
+/* Use compound selector to outweigh .tripwire-line's red background (same specificity, later in source) */
+.tripwire-line.tripwire-gate-line {
   background: repeating-linear-gradient(
     90deg,
     #ffd166,
@@ -1683,7 +1684,7 @@ body {
   );
   box-shadow: 0 0 6px rgba(255, 209, 102, 0.55);
 }
-.tripwire-gate-line .tripwire-label {
+.tripwire-line.tripwire-gate-line .tripwire-label {
   color: #ffd166;
   font-size: 7px;
 }
