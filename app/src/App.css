@@ -3299,3 +3299,175 @@ body {
     max-width: 360px;
   }
 }
+
+/* ============================================================
+   THEME OVERRIDES — Knicks + Duck Hunt
+   ============================================================
+   Apply via <html data-theme="knicks"> (set by useTheme.js).
+   Remaps the existing --gb-* palette vars so every selector that
+   references them re-skins automatically. Selector specificity
+   (0,1,1) beats :root (0,1,0) so these always win.
+   ============================================================ */
+
+/* ───── KNICKS — MSG hardwood, orange + blue ───── */
+html[data-theme="knicks"] {
+  --gb-shell: #1a1a3a;
+  --gb-shell-light: #25254a;
+  --gb-shell-dark: #0d0d22;
+  --gb-screen-bg: #0d2540;
+  --gb-screen-light: #F58426;
+  --gb-screen-dark: #006BB6;
+  --gb-screen-glow: rgba(245, 132, 38, 0.18);
+  --gb-text: #F58426;
+  --gb-text-dim: #d96a14;
+  --gb-accent: #F58426;
+}
+
+html[data-theme="knicks"] body {
+  background: var(--gb-shell);
+  color: #f0f0f0;
+}
+
+html[data-theme="knicks"] .app {
+  background: linear-gradient(180deg, #1a1a3a 0%, #0d2540 60%, #b87333 100%);
+}
+
+html[data-theme="knicks"] .gb-label {
+  background: linear-gradient(180deg, #25254a, #0d2540);
+}
+
+html[data-theme="knicks"] .gb-label h1 {
+  color: #F58426;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme="knicks"] .gb-label p {
+  color: #b8c5d6;
+}
+
+html[data-theme="knicks"] .settings-link,
+html[data-theme="knicks"] .mute-btn {
+  border-color: #F58426;
+  color: #F58426;
+}
+
+html[data-theme="knicks"] .gb-screen-bezel {
+  background: #1a1a3a;
+  border-color: #F58426;
+}
+
+html[data-theme="knicks"] .gb-lcd-value {
+  color: var(--gb-screen-light);
+  text-shadow: 0 0 12px rgba(245, 132, 38, 0.6);
+}
+
+/* ───── DUCK HUNT — NES sky + coin gold ───── */
+html[data-theme="ducklehunt"] {
+  --gb-shell: #707070;
+  --gb-shell-light: #909090;
+  --gb-shell-dark: #505050;
+  --gb-screen-bg: #5C94FC;
+  --gb-screen-light: #FCD000;
+  --gb-screen-dark: #C84C0C;
+  --gb-screen-glow: rgba(252, 208, 0, 0.18);
+  --gb-text: #FCD000;
+  --gb-text-dim: #dba600;
+  --gb-accent: #E40058;
+}
+
+html[data-theme="ducklehunt"] body {
+  background: var(--gb-shell);
+}
+
+html[data-theme="ducklehunt"] .app {
+  background: linear-gradient(180deg, #5C94FC 0%, #5C94FC 65%, #00A800 65%, #00A800 100%);
+}
+
+html[data-theme="ducklehunt"] .gb-label {
+  background: linear-gradient(180deg, #909090, #707070);
+}
+
+html[data-theme="ducklehunt"] .gb-label h1 {
+  color: #E40058;
+  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+}
+
+html[data-theme="ducklehunt"] .gb-label p {
+  color: #1a1a1a;
+}
+
+html[data-theme="ducklehunt"] .settings-link,
+html[data-theme="ducklehunt"] .mute-btn {
+  border-color: #1a1a1a;
+  color: #1a1a1a;
+}
+
+html[data-theme="ducklehunt"] .gb-screen-bezel {
+  background: #C84C0C;
+  border-color: #1a1a1a;
+}
+
+html[data-theme="ducklehunt"] .gb-lcd-value {
+  color: var(--gb-screen-light);
+  text-shadow:
+    2px 2px 0 #000,
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000;
+}
+
+/* ───── THEME PICKER (Settings) ───── */
+.theme-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.theme-picker-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 6px;
+  background: var(--gb-screen-bg);
+  color: var(--gb-screen-light);
+  border: 2px solid var(--gb-screen-dark);
+  border-radius: 6px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  min-height: 64px;
+}
+
+.theme-picker-btn:active {
+  transform: translateY(1px);
+}
+
+.theme-picker-btn.is-active {
+  background: var(--gb-screen-light);
+  color: var(--gb-screen-bg);
+  border-color: var(--gb-screen-light);
+  box-shadow: 0 0 12px var(--gb-screen-glow);
+}
+
+.theme-picker-badge {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.theme-picker-label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.theme-picker-check {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 10px;
+}

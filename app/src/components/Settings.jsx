@@ -2,20 +2,26 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { usePremium } from '../hooks/usePremium'
+import { useTheme } from '../hooks/useTheme'
 import { StateSelector } from './StateSelector'
 import { getContainerOptions, MULTI_RATE_STATES } from '../hooks/useDepositRules'
 import { supabase } from '../lib/supabase'
 import { getRank } from '../lib/ranks'
+import { themeList } from '../lib/themes'
 
 // Settings page — plan status, upgrade, alerts, navigation
 export function Settings() {
   const [searchParams] = useSearchParams()
   const { user, profile, signOut, isLocal, refreshProfile, updateAlertTarget, updateState, updateContainerType, signInWithGoogle, updateLeaderboardVisibility } = useAuth()
   const { isPremium, alertTarget, subscriptionStatus, premiumSince } = usePremium(profile)
+  const { themeId, setTheme } = useTheme()
+  const isAdmin = user?.email?.toLowerCase() === (import.meta.env.VITE_ADMIN_EMAIL || '').toLowerCase()
   const [alertInput, setAlertInput] = useState(alertTarget || '')
   const [showUpgradeSuccess, setShowUpgradeSuccess] = useState(false)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [upgradeError, setUpgradeError] = useState(null)
+  const [portalError, setPortalError] = useState(null)
+  const [portalLoading, setPortalLoading] = useState(false)
 
   // Handle ?upgraded=true from Stripe redirect — poll until webhook fires
   useEffect(() => {
@@ -205,7 +211,7 @@ export function Settings() {
               <ul className="settings-pro-perks">
                 <li>See your money grow as you count</li>
                 <li>Bag alert / target limit</li>
-                <li>45-day session history</li>
+                <li>Lifetime session history (free = last 45 days)</li>
                 <li>All for just $0.99/mo</li>
               </ul>
             </div>
@@ -276,7 +282,7 @@ export function Settings() {
               <span>DEPOSIT TIPS</span>
               <span>→</span>
             </Link>
-            {user?.email?.toLowerCase() === (import.meta.env.VITE_ADMIN_EMAIL || '').toLowerCase() && (
+            {isAdmin && (
               <Link to="/admin" className="settings-nav-link">
                 <span>ADMIN PANEL</span>
                 <span>→</span>
@@ -285,16 +291,50 @@ export function Settings() {
           </div>
         </div>
 
+        {/* Theme picker — admin / early-access only */}
+        {isAdmin && (
+          <div className="settings-section">
+            <h2 className="settings-section-title">EARLY ACCESS · THEME</h2>
+            <p className="settings-section-desc">
+              Cosmetic skins — palette + sound effects. Knicks and Duck Hunt are hidden from regular users.
+            </p>
+            <div className="theme-picker">
+              {themeList.map((t) => (
+                <button
+                  key={t.id}
+                  className={`theme-picker-btn ${themeId === t.id ? 'is-active' : ''}`}
+                  onClick={() => {
+                    setTheme(t.id)
+                    window.dispatchEvent(new Event('cntemup-theme-change'))
+                  }}
+                  type="button"
+                >
+                  <span className="theme-picker-badge" aria-hidden="true">{t.badge}</span>
+                  <span className="theme-picker-label">{t.label}</span>
+                  {themeId === t.id && <span className="theme-picker-check">✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Manage subscription — as a nav link style */}
         {isPremium && (
           <div className="settings-section">
             <div className="settings-nav-links">
               <button
                 className="settings-nav-link"
+                disabled={portalLoading}
                 onClick={async () => {
+                  setPortalError(null)
+                  setPortalLoading(true)
                   try {
                     const { data: { session: authSession } } = await supabase.auth.getSession()
                     const token = authSession?.access_token
+                    if (!token) {
+                      setPortalError('No auth session — sign out and back in')
+                      return
+                    }
                     const res = await fetch('/api/create-portal-session', {
                       method: 'POST',
                       headers: {
@@ -304,15 +344,21 @@ export function Settings() {
                       body: JSON.stringify({}),
                     })
                     const data = await res.json()
-                    if (data.url) window.location.href = data.url
+                    if (data.url) { window.location.href = data.url; return }
+                    setPortalError(data.error || 'Portal failed — try again')
                   } catch (err) {
-                    console.error('Portal error:', err)
+                    setPortalError(`Portal error: ${err.message}`)
+                  } finally {
+                    setPortalLoading(false)
                   }
                 }}
               >
-                <span>MANAGE SUBSCRIPTION</span>
+                <span>{portalLoading ? 'LOADING…' : 'MANAGE SUBSCRIPTION'}</span>
                 <span>→</span>
               </button>
+              {portalError && (
+                <p className="premium-gate-error" role="alert">{portalError}</p>
+              )}
             </div>
           </div>
         )}
@@ -324,6 +370,11 @@ export function Settings() {
       </main>
 
       <footer className="settings-footer">
+        <div className="settings-footer-legal">
+          <Link to="/privacy">Privacy</Link>
+          <span aria-hidden="true">·</span>
+          <Link to="/terms">Terms</Link>
+        </div>
         <p>CNTEM'UP &copy; 2026</p>
       </footer>
     </div>

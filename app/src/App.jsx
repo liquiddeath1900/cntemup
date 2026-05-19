@@ -16,6 +16,7 @@ import { useTripwire } from './hooks/useTripwire'
 import { useAuth } from './hooks/useAuth'
 import { useDepositRules } from './hooks/useDepositRules'
 import { useSound } from './hooks/useSound'
+import { useTheme } from './hooks/useTheme'
 import { usePremium } from './hooks/usePremium'
 import { useHistory } from './hooks/useHistory'
 import { getRank } from './lib/ranks'
@@ -440,6 +441,8 @@ function AdminRoute({ element }) {
 function App() {
   const { user, loading, setupLocal } = useAuth()
   const didSetup = useRef(false)
+  // Apply data-theme to <html> for theme-scoped CSS. Defaults to gameboy.
+  useTheme()
 
   useEffect(() => {
     if (!loading && !user && !didSetup.current) {
