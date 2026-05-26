@@ -9,10 +9,22 @@ import { Tips } from './components/Tips'
 import { AdminPage } from './components/AdminPage'
 import { Leaderboard } from './components/Leaderboard'
 import { AlertModal } from './components/AlertModal'
+import { NotFound } from './components/NotFound'
 import { RankUpModal } from './components/RankUpModal'
 import { VerifySlipModal } from './components/VerifySlipModal'
 import { useCamera } from './hooks/useCamera'
 import { useTripwire } from './hooks/useTripwire'
+import { useTripwireV2 } from './hooks/useTripwireV2'
+import { useTripwireV3 } from './hooks/useTripwireV3'
+
+// V3 is the public default (5-line gate, motion-blur-aware).
+// ?v1=1 falls back to the original single-line tripwire; ?v2=1 to the two-line gate prototype.
+// Any dev flag also enables the A/B/C overlay so all three counts stay visible.
+const SEARCH = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+const USE_V1 = SEARCH?.get('v1') === '1'
+const USE_V2 = SEARCH?.get('v2') === '1'
+const USE_V3 = SEARCH?.get('v3') === '1'
+const DEV_OVERLAY = USE_V1 || USE_V2 || USE_V3
 import { useAuth } from './hooks/useAuth'
 import { useDepositRules } from './hooks/useDepositRules'
 import { useSound } from './hooks/useSound'
@@ -93,7 +105,14 @@ function CounterPage() {
   const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code, profile?.container_type || 'standard')
   const { muted, toggleMute, playCount, playAlarm, playBoot } = useSound()
   const { videoRef, isStreaming, videoReady, error: cameraError, debugLog, devices, startCamera, stopCamera, switchCamera, handleTapToPlay } = useCamera()
-  const { startTripwire, stopTripwire, tripwireY, setTripwireY, isTriggered, setOnTrigger } = useTripwire()
+  const v1 = useTripwire()
+  const v2 = useTripwireV2()
+  const v3 = useTripwireV3()
+  // Choose which tripwire drives the official count. V3 is the public default.
+  let active = v3
+  if (USE_V1) active = v1
+  else if (USE_V2) active = v2
+  const { tripwireY, isTriggered, setOnTrigger } = active
 
   // Wire tripwire trigger → increment count + sound + alert check
   useEffect(() => {
@@ -115,12 +134,15 @@ function CounterPage() {
     })
   }, [setCount, setSessionCount, setOnTrigger, playCount, isPremium, alertTarget, alertFired, playAlarm])
 
-  // Start tripwire when video is ready
+  // Start all three tripwires in parallel when video is ready (for A/B/C comparison)
   useEffect(() => {
     if (isRunning && videoReady && videoRef.current) {
-      startTripwire(videoRef.current)
+      v1.startTripwire(videoRef.current)
+      v2.startTripwire(videoRef.current)
+      v3.startTripwire(videoRef.current)
     }
-  }, [isRunning, videoReady, videoRef, startTripwire])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRunning, videoReady, videoRef])
 
   const handleManualAdd = () => {
     if (!sessionStartRef.current) sessionStartRef.current = Date.now()
@@ -149,7 +171,9 @@ function CounterPage() {
 
   const handleStop = () => {
     setIsRunning(false)
-    stopTripwire()
+    v1.stopTripwire()
+    v2.stopTripwire()
+    v3.stopTripwire()
     stopCamera()
   }
 
@@ -215,16 +239,19 @@ function CounterPage() {
     }
   }
 
-  // Cleanup on unmount
+  // Cleanup on unmount — stop all tripwires
   useEffect(() => {
     return () => {
-      stopTripwire()
+      v1.stopTripwire()
+      v2.stopTripwire()
+      v3.stopTripwire()
       stopCamera()
       clearTimeout(resetTimerRef.current)
     }
-  }, [stopTripwire, stopCamera])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stopCamera])
 
-  // Drag tripwire line
+  // Drag tripwire line — keep both hooks' Y in sync so they sample the same region
   const handleDragStart = useCallback((e) => {
     e.preventDefault()
     setIsDragging(true)
@@ -235,8 +262,11 @@ function CounterPage() {
     const rect = cameraContainerRef.current.getBoundingClientRect()
     const clientY = e.touches ? e.touches[0].clientY : e.clientY
     const y = Math.max(0.1, Math.min(0.9, (clientY - rect.top) / rect.height))
-    setTripwireY(y)
-  }, [isDragging, setTripwireY])
+    v1.setTripwireY(y)
+    v2.setTripwireY(y)
+    v3.setTripwireY(y)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDragging])
 
   const handleDragEnd = useCallback(() => {
     setIsDragging(false)
@@ -316,7 +346,8 @@ function CounterPage() {
               autoPlay
             />
 
-            {/* Tripwire line — visible when camera is running */}
+            {/* Single user-facing tripwire line. V3 samples 5 internal lines behind the
+                scenes but only this center one is shown so the UI stays clean. */}
             {isStreaming && (
               <div
                 className={`tripwire-line ${isTriggered ? 'tripwire-trigger-flash' : ''}`}
@@ -324,8 +355,25 @@ function CounterPage() {
                 onMouseDown={handleDragStart}
                 onTouchStart={handleDragStart}
               >
-                <span className="tripwire-label">TRIPWIRE</span>
+                <span className="tripwire-label">
+                  {`TRIPWIRE${USE_V1 ? ' V1' : ''}${USE_V2 && !USE_V1 ? ' V2' : ''}`}
+                </span>
                 <span className="tripwire-handle" />
+              </div>
+            )}
+
+            {/* Dev A/B/C overlay — when ?v2=1 or ?v3=1 in URL */}
+            {DEV_OVERLAY && isStreaming && (
+              <div className="tripwire-ab-overlay">
+                <div>V1: {v1.triggerCount}</div>
+                <div>V2: {v2.triggerCount}</div>
+                <div>V3: {v3.triggerCount}</div>
+                <div className="ab-diag">v2 shake-rej: {v2.shakeRejects}</div>
+                <div className="ab-diag">v2 dir-rej: {v2.directionRejects}</div>
+                <div className="ab-diag">v3 shake-rej: {v3.shakeRejects}</div>
+                <div className="ab-diag">v3 expired: {v3.expiredPrimes}</div>
+                <div className="ab-diag">v3 upward-rej: {v3.upwardRejects}</div>
+                <div className="ab-active">[active: {(() => { if (USE_V1) return 'V1'; if (USE_V2) return 'V2'; return 'V3' })()}]</div>
               </div>
             )}
 
@@ -473,6 +521,7 @@ function App() {
         <Route path="/tips" element={<Tips />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/admin" element={<AdminRoute element={<AdminPage />} />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   )
