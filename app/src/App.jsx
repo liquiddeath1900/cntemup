@@ -17,12 +17,14 @@ import { useTripwire } from './hooks/useTripwire'
 import { useTripwireV2 } from './hooks/useTripwireV2'
 import { useTripwireV3 } from './hooks/useTripwireV3'
 
-// Dev toggles: ?v2=1 or ?v3=1 picks which prototype drives the count.
-// All three (V1, V2, V3) always run in parallel for side-by-side comparison.
+// V3 is the public default (5-line gate, motion-blur-aware).
+// ?v1=1 falls back to the original single-line tripwire; ?v2=1 to the two-line gate prototype.
+// Any dev flag also enables the A/B/C overlay so all three counts stay visible.
 const SEARCH = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+const USE_V1 = SEARCH?.get('v1') === '1'
 const USE_V2 = SEARCH?.get('v2') === '1'
 const USE_V3 = SEARCH?.get('v3') === '1'
-const DEV_OVERLAY = USE_V2 || USE_V3
+const DEV_OVERLAY = USE_V1 || USE_V2 || USE_V3
 import { useAuth } from './hooks/useAuth'
 import { useDepositRules } from './hooks/useDepositRules'
 import { useSound } from './hooks/useSound'
@@ -105,9 +107,9 @@ function CounterPage() {
   const v1 = useTripwire()
   const v2 = useTripwireV2()
   const v3 = useTripwireV3()
-  // Choose which tripwire drives the official count. V1 is the production default.
-  let active = v1
-  if (USE_V3) active = v3
+  // Choose which tripwire drives the official count. V3 is the public default.
+  let active = v3
+  if (USE_V1) active = v1
   else if (USE_V2) active = v2
   const { tripwireY, isTriggered, setOnTrigger } = active
 
@@ -353,7 +355,7 @@ function CounterPage() {
                 onTouchStart={handleDragStart}
               >
                 <span className="tripwire-label">
-                  {`TRIPWIRE${USE_V3 ? ' V3' : ''}${!USE_V3 && USE_V2 ? ' V2' : ''}`}
+                  {`TRIPWIRE${USE_V1 ? ' V1' : ''}${USE_V2 && !USE_V1 ? ' V2' : ''}`}
                 </span>
                 <span className="tripwire-handle" />
               </div>
@@ -370,7 +372,7 @@ function CounterPage() {
                 <div className="ab-diag">v3 shake-rej: {v3.shakeRejects}</div>
                 <div className="ab-diag">v3 expired: {v3.expiredPrimes}</div>
                 <div className="ab-diag">v3 upward-rej: {v3.upwardRejects}</div>
-                <div className="ab-active">[active: {USE_V3 && 'V3'}{!USE_V3 && USE_V2 && 'V2'}{!USE_V3 && !USE_V2 && 'V1'}]</div>
+                <div className="ab-active">[active: {(() => { if (USE_V1) return 'V1'; if (USE_V2) return 'V2'; return 'V3' })()}]</div>
               </div>
             )}
 
