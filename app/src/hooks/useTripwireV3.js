@@ -1,10 +1,18 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 
-// Tripwire V3 — two-line gate with segmented cells.
-// An object must cross the TOP line, then the BOTTOM line, within a transit window.
-// Each horizontal "cell" of the gate runs an independent state machine so multiple
-// bottles falling through different parts of the frame each get their own count.
-// Same public API as useTripwire / useTripwireV2 so App.jsx can run all three in parallel.
+// Uniform aggressive thresholds across all 5 lines (one per sampling line, top→bottom).
+// Motion blur from a falling bottle creates a streak that hits every line ~equally
+// in one frame, so there's no physical basis for tiering — multi-line gives 5
+// independent chances to catch the streak, that's the win.
+const CELL_TRIGGER_PERCENT_PER_LINE = [0.08, 0.08, 0.08, 0.08, 0.08]
+
+// Tripwire V3 — multi-line gate with segmented cells.
+// N parallel sampling lines stacked across the gate region. Cells split each line
+// horizontally. A confirmed pass = a cell cluster activates on line K, then an
+// overlapping cluster activates on line K+1 within MAX_TRANSIT_MS_PER_HOP.
+// More lines + tighter spacing = more chances to catch a fast-falling bottle,
+// since gravity gives only ~30–60ms between adjacent lines.
+// UI only shows the user-facing line at tripwireY; the rest are invisible.
 export function useTripwireV3() {
   const [tripwireY, setTripwireY] = useState(0.5)
   const [isTriggered, setIsTriggered] = useState(false)
@@ -21,33 +29,26 @@ export function useTripwireV3() {
   const lastFrameTime = useRef(0)
   const onTriggerRef = useRef(null)
 
-  const prevTopRef = useRef(null)
-  const prevBottomRef = useRef(null)
+  // Per-line previous RGB buffers (length N_LINES)
+  const prevLinesRef = useRef([])
   const prevCornerRef = useRef(null)
 
-  // Active "primed events" — top-line clusters waiting for a matching bottom-line cluster
-  // Each: { leftCell, rightCell, primedAt }
+  // Active primed events — clusters waiting for confirmation on the next line down
+  // Each: { lineIdx, left, right, primedAt }
   const primedEventsRef = useRef([])
 
-  // Timestamp of last fire — enforces a global cooldown so one physical bottle
-  // can't fire multiple times even if it activates multiple cells
+  // Global cooldown timestamp so one physical bottle fires once
   const lastFireAtRef = useRef(0)
 
-  // Per-cell timestamp of when the BOTTOM strip was active while the TOP was NOT.
-  // If this is recent when we'd otherwise prime a top cluster, the motion is
-  // going UPWARD through the gate (bottom hit first) and we reject the prime.
-  const lastBotAloneRef = useRef(null)
-
   // ── Config ──────────────────────────────────────────────────────
-  const STRIP_HEIGHT = 22         // px tall per gate line strip
-  const GATE_HALF_OFFSET = 0.05   // each line sits 5% of frame above/below tripwireY → 10% gate
-  const N_CELLS = 8               // horizontal cells across the frame
-  const CHANGE_THRESHOLD = 28     // per-channel brightness delta = "changed"
-  const CELL_TRIGGER_PERCENT = 0.26 // % of cell's pixels changed = cell is active
-  const MAX_TRANSIT_MS = 500      // max time top→bottom for a real drop
-  const MAX_PRIMED_AGE_MS = 700   // primed events expire after this
-  const GLOBAL_COOLDOWN_MS = 200  // min time between any two fires
-  const REVERSE_LOOKBACK_MS = 300 // if bottom was active alone within this window, reject top prime (upward motion)
+  const N_LINES = 5                      // sampling lines across the gate
+  const GATE_HALF_OFFSET = 0.05          // outermost lines sit ±5% from tripwireY
+  const STRIP_HEIGHT = 22                // px tall per line strip
+  const N_CELLS = 8                      // horizontal cells per line
+  const CHANGE_THRESHOLD = 18            // per-channel brightness delta = pixel "changed"
+  const MAX_TRANSIT_MS_PER_HOP = 250     // max time between adjacent line confirmations
+  const MAX_PRIMED_AGE_MS = 500          // primed events expire after this
+  const GLOBAL_COOLDOWN_MS = 200         // min time between any two fires
   const TARGET_FPS = 30
   const CORNER_SIZE = 60
   const SHAKE_PERCENT = 0.07
@@ -61,7 +62,6 @@ export function useTripwireV3() {
     return canvasRef.current
   }, [])
 
-  // Grab a region from video as Uint8Array of interleaved R,G,B bytes
   const getRegionRGB = useCallback((video, sx, sy, sw, sh) => {
     if (!video || video.videoWidth === 0) return null
     const canvas = getCanvas()
@@ -92,8 +92,7 @@ export function useTripwireV3() {
     return changed / pixels
   }, [])
 
-  // Per-cell change fractions across a horizontal strip buffer.
-  // Returns array of length N_CELLS with each cell's change fraction.
+  // Per-cell change fractions across a horizontal strip buffer
   const compareRGBPerCell = useCallback((prev, curr, stripW, stripH) => {
     const out = new Array(N_CELLS).fill(0)
     if (!prev || !curr || prev.length !== curr.length) return out
@@ -104,7 +103,6 @@ export function useTripwireV3() {
     for (let c = 0; c < N_CELLS; c++) {
       const xStart = c * cellW
       const xEnd = c === N_CELLS - 1 ? stripW : xStart + cellW
-      const w = xEnd - xStart
       let changed = 0
       let total = 0
       for (let y = 0; y < stripH; y++) {
@@ -118,17 +116,16 @@ export function useTripwireV3() {
         }
       }
       out[c] = total > 0 ? changed / total : 0
-      void w
     }
     return out
   }, [])
 
-  // Group adjacent active cells into clusters. Returns [{ left, right }, ...]
-  const findClusters = useCallback((cellActivations) => {
+  // Group adjacent active cells into clusters using a per-line threshold
+  const findClusters = useCallback((cellActivations, threshold) => {
     const clusters = []
     let start = -1
     for (let i = 0; i < cellActivations.length; i++) {
-      const active = cellActivations[i] >= CELL_TRIGGER_PERCENT
+      const active = cellActivations[i] >= threshold
       if (active && start === -1) start = i
       if (!active && start !== -1) {
         clusters.push({ left: start, right: i - 1 })
@@ -139,8 +136,14 @@ export function useTripwireV3() {
     return clusters
   }, [])
 
-  // Two clusters overlap if their cell-index ranges overlap
   const clustersOverlap = (a, b) => !(a.right < b.left || b.right < a.left)
+
+  // Vertical offset (fraction of frame height) for sampling line i ∈ [0, N_LINES-1].
+  // Line 0 = topmost (-GATE_HALF_OFFSET), Line N-1 = bottommost (+GATE_HALF_OFFSET).
+  const lineOffset = useCallback((i) => {
+    if (N_LINES === 1) return 0
+    return -GATE_HALF_OFFSET + (2 * GATE_HALF_OFFSET) * (i / (N_LINES - 1))
+  }, [])
 
   const processFrameRef = useRef(null)
 
@@ -161,112 +164,99 @@ export function useTripwireV3() {
       return
     }
 
-    // Gate geometry
-    const topY = Math.max(0, Math.floor(h * (tripwireY - GATE_HALF_OFFSET)) - STRIP_HEIGHT / 2)
-    const topH = Math.min(STRIP_HEIGHT, h - topY)
-    const botY = Math.max(0, Math.floor(h * (tripwireY + GATE_HALF_OFFSET)) - STRIP_HEIGHT / 2)
-    const botH = Math.min(STRIP_HEIGHT, h - botY)
     const cornerW = Math.min(CORNER_SIZE, w)
     const cornerH = Math.min(CORNER_SIZE, h)
-
     const currentCorner = getRegionRGB(video, 0, 0, cornerW, cornerH)
-    const currentTop = getRegionRGB(video, 0, topY, w, topH)
-    const currentBottom = getRegionRGB(video, 0, botY, w, botH)
 
-    if (currentTop && prevTopRef.current && currentBottom && prevBottomRef.current) {
+    // Sample all N_LINES strips this frame
+    const currentLines = new Array(N_LINES)
+    const lineHeights = new Array(N_LINES)
+    for (let i = 0; i < N_LINES; i++) {
+      const y = Math.max(0, Math.floor(h * (tripwireY + lineOffset(i))) - STRIP_HEIGHT / 2)
+      const sh = Math.min(STRIP_HEIGHT, h - y)
+      lineHeights[i] = sh
+      currentLines[i] = getRegionRGB(video, 0, y, w, sh)
+    }
+
+    const havePrev = prevLinesRef.current.length === N_LINES && prevLinesRef.current.every(b => b)
+    if (havePrev && currentLines.every(b => b)) {
       const cornerChange = compareRGB(prevCornerRef.current, currentCorner)
       const isShake = cornerChange > SHAKE_PERCENT
 
       if (isShake) {
-        // Shake frame — don't add new primes, don't fire counts, but DO age existing primes
         setShakeRejects(n => n + 1)
       } else {
-        const topCells = compareRGBPerCell(prevTopRef.current, currentTop, w, topH)
-        const botCells = compareRGBPerCell(prevBottomRef.current, currentBottom, w, botH)
-
-        const topClusters = findClusters(topCells)
-        const botClusters = findClusters(botCells)
+        // Compute per-cell activations for every line
+        const lineCells = new Array(N_LINES)
+        const lineClusters = new Array(N_LINES)
+        for (let i = 0; i < N_LINES; i++) {
+          lineCells[i] = compareRGBPerCell(prevLinesRef.current[i], currentLines[i], w, lineHeights[i])
+          lineClusters[i] = findClusters(lineCells[i], CELL_TRIGGER_PERCENT_PER_LINE[i])
+        }
 
         const now = timestamp
-
-        // Update per-cell direction memory: mark cells where bottom is active
-        // but top is NOT — this is the signature of an upward motion's first phase.
-        const lastBotAlone = lastBotAloneRef.current
-        if (lastBotAlone) {
-          for (let c = 0; c < N_CELLS; c++) {
-            const topActive = topCells[c] >= CELL_TRIGGER_PERCENT
-            const botActive = botCells[c] >= CELL_TRIGGER_PERCENT
-            if (botActive && !topActive) {
-              lastBotAlone[c] = now
-            }
-          }
-        }
-
-        // Phase 1: try to resolve any bottom cluster against an existing primed event.
-        // Enforce a global cooldown so a single physical object can't fire twice in a row.
-        const consumedPrimes = new Set()
-        let firedThisFrame = false
         const sinceLastFire = now - lastFireAtRef.current
         const cooldownActive = sinceLastFire < GLOBAL_COOLDOWN_MS
+
+        // Phase 1: for each cluster on line i (i >= 1), look for a prime on line i-1
+        // with overlapping cells inside the transit window. If matched → fire (once per frame).
+        const consumedPrimes = new Set()
+        let firedThisFrame = false
+
         if (!cooldownActive) {
-          for (const bot of botClusters) {
-            let fired = false
-            for (let pi = 0; pi < primedEventsRef.current.length; pi++) {
-              if (consumedPrimes.has(pi)) continue
-              const prime = primedEventsRef.current[pi]
-              const age = now - prime.primedAt
-              if (age > MAX_TRANSIT_MS) continue
-              if (clustersOverlap(prime, bot)) {
-                setTriggerCount(n => n + 1)
-                onTriggerRef.current?.()
-                consumedPrimes.add(pi)
-                firedThisFrame = true
-                lastFireAtRef.current = now
-                fired = true
-                break // one bottom cluster fires at most one prime
+          for (let i = 1; i < N_LINES && !firedThisFrame; i++) {
+            for (const cluster of lineClusters[i]) {
+              let matched = false
+              for (let pi = 0; pi < primedEventsRef.current.length; pi++) {
+                if (consumedPrimes.has(pi)) continue
+                const prime = primedEventsRef.current[pi]
+                if (prime.lineIdx !== i - 1) continue
+                if (now - prime.primedAt > MAX_TRANSIT_MS_PER_HOP) continue
+                if (clustersOverlap(prime, cluster)) {
+                  // Promote the prime to line i so it can chain to line i+1 if needed,
+                  // but since we already fired we'll just count it and consume.
+                  setTriggerCount(n => n + 1)
+                  onTriggerRef.current?.()
+                  consumedPrimes.add(pi)
+                  lastFireAtRef.current = now
+                  firedThisFrame = true
+                  matched = true
+                  break
+                }
               }
+              if (matched) break
             }
-            if (fired) break // one fire per frame to respect cooldown
           }
         }
+
         if (firedThisFrame) {
           setIsTriggered(true)
           setTimeout(() => setIsTriggered(false), 200)
         }
-        // Drop consumed primes
         primedEventsRef.current = primedEventsRef.current.filter((_, i) => !consumedPrimes.has(i))
 
-        // Phase 2: register top clusters as new primed events.
-        // Skip if: an alive prime already overlaps, OR we just fired and the
-        // cooldown is still active (prevents the tail of one bottle from priming
-        // a phantom event as it exits the gate), OR this region had bottom-alone
-        // activity recently (which means the motion is going UP through the gate).
+        // Phase 2: register clusters on every line as primes (so any line can act as the
+        // "top" of a confirmation pair with the next line down). Skip lines that just
+        // fired this frame's cooldown.
         if (!cooldownActive || !firedThisFrame) {
-          for (const top of topClusters) {
-            const overlapsExisting = primedEventsRef.current.some(p => clustersOverlap(p, top))
-            if (overlapsExisting) continue
-
-            // Direction check: any cell in this cluster recently saw bottom-alone activity?
-            let isUpward = false
-            if (lastBotAlone) {
-              for (let c = top.left; c <= top.right; c++) {
-                if (now - lastBotAlone[c] < REVERSE_LOOKBACK_MS && lastBotAlone[c] > 0) {
-                  isUpward = true
-                  break
-                }
-              }
+          for (let i = 0; i < N_LINES - 1; i++) {  // last line can't prime — nothing below it
+            for (const cluster of lineClusters[i]) {
+              const dup = primedEventsRef.current.some(
+                p => p.lineIdx === i && clustersOverlap(p, cluster)
+              )
+              if (dup) continue
+              primedEventsRef.current.push({
+                lineIdx: i,
+                left: cluster.left,
+                right: cluster.right,
+                primedAt: now,
+              })
             }
-            if (isUpward) {
-              setUpwardRejects(n => n + 1)
-              continue
-            }
-
-            primedEventsRef.current.push({ left: top.left, right: top.right, primedAt: now })
           }
         }
       }
 
-      // Expire stale primes regardless of shake/no-shake
+      // Expire stale primes
       const expireBefore = timestamp - MAX_PRIMED_AGE_MS
       const before = primedEventsRef.current.length
       primedEventsRef.current = primedEventsRef.current.filter(p => p.primedAt >= expireBefore)
@@ -275,11 +265,10 @@ export function useTripwireV3() {
     }
 
     prevCornerRef.current = currentCorner
-    prevTopRef.current = currentTop
-    prevBottomRef.current = currentBottom
+    prevLinesRef.current = currentLines
 
     rafRef.current = requestAnimationFrame((ts) => processFrameRef.current(video, ts))
-  }, [isRunning, tripwireY, getRegionRGB, compareRGB, compareRGBPerCell, findClusters])
+  }, [isRunning, tripwireY, getRegionRGB, compareRGB, compareRGBPerCell, findClusters, lineOffset])
 
   useEffect(() => {
     processFrameRef.current = processFrame
@@ -287,11 +276,9 @@ export function useTripwireV3() {
 
   const startTripwire = useCallback((video) => {
     prevCornerRef.current = null
-    prevTopRef.current = null
-    prevBottomRef.current = null
+    prevLinesRef.current = []
     primedEventsRef.current = []
     lastFireAtRef.current = 0
-    lastBotAloneRef.current = new Array(N_CELLS).fill(0)
     lastFrameTime.current = 0
     setIsRunning(true)
     rafRef.current = requestAnimationFrame((ts) => processFrameRef.current(video, ts))
@@ -304,8 +291,7 @@ export function useTripwireV3() {
       rafRef.current = null
     }
     prevCornerRef.current = null
-    prevTopRef.current = null
-    prevBottomRef.current = null
+    prevLinesRef.current = []
     primedEventsRef.current = []
   }, [])
 
@@ -335,7 +321,7 @@ export function useTripwireV3() {
     shakeRejects,
     expiredPrimes,
     upwardRejects,
-    // For visual gate rendering in App.jsx
+    // Kept for back-compat with App.jsx (no longer rendered visually)
     gateHalfOffset: GATE_HALF_OFFSET,
   }
 }

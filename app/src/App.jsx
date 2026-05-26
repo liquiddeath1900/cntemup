@@ -343,38 +343,18 @@ function CounterPage() {
               autoPlay
             />
 
-            {/* V3 gate (two parallel lines) — only when ?v3=1 active. Both lines flash on fire. */}
-            {isStreaming && USE_V3 && (
-              <>
-                <div
-                  className={`tripwire-line tripwire-gate-line ${isTriggered ? 'tripwire-trigger-flash' : ''}`}
-                  style={{ top: `${(tripwireY - v3.gateHalfOffset) * 100}%` }}
-                  onMouseDown={handleDragStart}
-                  onTouchStart={handleDragStart}
-                >
-                  <span className="tripwire-label">GATE TOP</span>
-                </div>
-                <div
-                  className={`tripwire-line tripwire-gate-line ${isTriggered ? 'tripwire-trigger-flash' : ''}`}
-                  style={{ top: `${(tripwireY + v3.gateHalfOffset) * 100}%` }}
-                  onMouseDown={handleDragStart}
-                  onTouchStart={handleDragStart}
-                >
-                  <span className="tripwire-label">GATE BOT</span>
-                  <span className="tripwire-handle" />
-                </div>
-              </>
-            )}
-
-            {/* V1/V2 single tripwire line — when V3 is off */}
-            {isStreaming && !USE_V3 && (
+            {/* Single user-facing tripwire line. V3 samples 5 internal lines behind the
+                scenes but only this center one is shown so the UI stays clean. */}
+            {isStreaming && (
               <div
                 className={`tripwire-line ${isTriggered ? 'tripwire-trigger-flash' : ''}`}
                 style={{ top: `${tripwireY * 100}%` }}
                 onMouseDown={handleDragStart}
                 onTouchStart={handleDragStart}
               >
-                <span className="tripwire-label">TRIPWIRE{USE_V2 ? ' V2' : ''}</span>
+                <span className="tripwire-label">
+                  {`TRIPWIRE${USE_V3 ? ' V3' : ''}${!USE_V3 && USE_V2 ? ' V2' : ''}`}
+                </span>
                 <span className="tripwire-handle" />
               </div>
             )}
