@@ -10,6 +10,8 @@ import { AdminPage } from './components/AdminPage'
 import { Leaderboard } from './components/Leaderboard'
 import { AlertModal } from './components/AlertModal'
 import { NotFound } from './components/NotFound'
+import { Privacy } from './components/Privacy'
+import { Terms } from './components/Terms'
 import { RankUpModal } from './components/RankUpModal'
 import { VerifySlipModal } from './components/VerifySlipModal'
 import { useCamera } from './hooks/useCamera'
@@ -28,6 +30,7 @@ const DEV_OVERLAY = USE_V1 || USE_V2 || USE_V3
 import { useAuth } from './hooks/useAuth'
 import { useDepositRules } from './hooks/useDepositRules'
 import { useSound } from './hooks/useSound'
+import { useTheme } from './hooks/useTheme'
 import { usePremium } from './hooks/usePremium'
 import { useHistory } from './hooks/useHistory'
 import { getRank } from './lib/ranks'
@@ -99,7 +102,7 @@ function CounterPage() {
 
   const { user, profile, isLocal } = useAuth()
   const { isPremium, alertTarget } = usePremium(profile)
-  const { stats: historyStats } = useHistory(user?.id, isLocal)
+  const { stats: historyStats } = useHistory(user?.id, isLocal, isPremium)
   const myRank = getRank(historyStats?.totalBottles || 0)
   const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code, profile?.container_type || 'standard')
   const { muted, toggleMute, playCount, playAlarm, playBoot } = useSound()
@@ -471,12 +474,11 @@ function CounterPage() {
   )
 }
 
-// Admin route guard — checks email against env var
+// Admin route guard — reads profile.is_admin from DB (RLS-enforced)
 function AdminRoute({ element }) {
-  const { user, loading } = useAuth()
-  const adminEmail = import.meta.env.VITE_ADMIN_EMAIL
+  const { user, isAdmin, loading } = useAuth()
   if (loading) return null
-  if (!user || !adminEmail || user.email !== adminEmail) {
+  if (!user || !isAdmin) {
     // eslint-disable-next-line react-hooks/immutability
     window.location.href = '/'
     return null
@@ -488,6 +490,8 @@ function AdminRoute({ element }) {
 function App() {
   const { user, loading, setupLocal } = useAuth()
   const didSetup = useRef(false)
+  // Apply data-theme to <html> for theme-scoped CSS. Defaults to gameboy.
+  useTheme()
 
   useEffect(() => {
     if (!loading && !user && !didSetup.current) {
@@ -518,6 +522,8 @@ function App() {
         <Route path="/tips" element={<Tips />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/admin" element={<AdminRoute element={<AdminPage />} />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>

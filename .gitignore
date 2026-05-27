@@ -30,6 +30,8 @@ dist-ssr
 .DS_Store
 Thumbs.db
 .env*.local
+.env.tmp*
+.env.backup*
 
 # Don't track these in the CNTEMUP repo
 claude-bridge/

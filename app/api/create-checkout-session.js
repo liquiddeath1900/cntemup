@@ -2,6 +2,7 @@
 // POST /api/create-checkout-session (requires Bearer token)
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit, clientIp } from './_ratelimit.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 const supabase = createClient(
@@ -12,6 +13,15 @@ const supabase = createClient(
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  // Rate limit by IP first — burns one Upstash command per request, fails open.
+  // Blocks unauth spam before we even hit Supabase auth.
+  const ip = clientIp(req)
+  const rl = await checkRateLimit(`ip:${ip}`)
+  if (!rl.allowed) {
+    res.setHeader('Retry-After', Math.ceil((rl.reset - Date.now()) / 1000))
+    return res.status(429).json({ error: 'Too many requests. Try again later.' })
   }
 
   // JWT auth — verify caller identity
@@ -56,13 +66,37 @@ export default async function handler(req, res) {
           quantity: 1,
         },
       ],
-      success_url: `${req.headers.origin}/settings?upgraded=true`,
-      cancel_url: `${req.headers.origin}/settings`,
+      // Enable ToS consent only if STRIPE_TOS_CONSENT=1 (requires ToS URL in Stripe Dashboard → Public details).
+      ...(process.env.STRIPE_TOS_CONSENT === '1'
+        ? { consent_collection: { terms_of_service: 'required' } }
+        : {}),
+      // Pin to apex — never use req.headers.origin (forgeable Host/Origin headers).
+      success_url: 'https://cntemup.com/settings?upgraded=true',
+      cancel_url: 'https://cntemup.com/settings',
+    })
+
+    // Audit: log every checkout creation so silent dead-ends are visible
+    supabase.from('pro_checkout_log').insert({
+      user_id: userId,
+      user_email: email,
+      event_type: 'checkout_attempt',
+      event_status: 'success',
+      raw: { stripe_session_id: session.id },
+    }).then(({ error }) => {
+      if (error) console.error('Audit log write failed:', error.message)
     })
 
     res.status(200).json({ url: session.url })
   } catch (err) {
     console.error('Checkout error:', err.message)
+    // Best-effort audit row — don't block error response
+    supabase.from('pro_checkout_log').insert({
+      user_id: user?.id || null,
+      user_email: user?.email || null,
+      event_type: 'checkout_attempt',
+      event_status: 'error',
+      error_message: err.message?.slice(0, 500),
+    }).then(() => {})
     res.status(500).json({ error: 'Internal server error' })
   }
 }
