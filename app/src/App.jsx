@@ -13,18 +13,16 @@ import { NotFound } from './components/NotFound'
 import { RankUpModal } from './components/RankUpModal'
 import { VerifySlipModal } from './components/VerifySlipModal'
 import { useCamera } from './hooks/useCamera'
-import { useTripwire } from './hooks/useTripwire'
-import { useTripwireV2 } from './hooks/useTripwireV2'
 import { useTripwireV3 } from './hooks/useTripwireV3'
+import { useBeamOcclusion } from './hooks/useBeamOcclusion'
 
-// V3 is the public default (5-line gate, motion-blur-aware).
-// ?v1=1 falls back to the original single-line tripwire; ?v2=1 to the two-line gate prototype.
-// Any dev flag also enables the A/B/C overlay so all three counts stay visible.
+// Beam-occlusion is the public default (luminance dip-and-recover, lighting-invariant).
+// ?v3=1 falls back to the 5-line pixel-diff tripwire (escape hatch for phones where
+// beam misbehaves). ?dev=1 forces the overlay on without changing detector.
 const SEARCH = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
-const USE_V1 = SEARCH?.get('v1') === '1'
-const USE_V2 = SEARCH?.get('v2') === '1'
 const USE_V3 = SEARCH?.get('v3') === '1'
-const DEV_OVERLAY = USE_V1 || USE_V2 || USE_V3
+const USE_DEV = SEARCH?.get('dev') === '1'
+const DEV_OVERLAY = USE_V3 || USE_DEV
 import { useAuth } from './hooks/useAuth'
 import { useDepositRules } from './hooks/useDepositRules'
 import { useSound } from './hooks/useSound'
@@ -104,14 +102,11 @@ function CounterPage() {
   const myRank = getRank(historyStats?.totalBottles || 0)
   const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code, profile?.container_type || 'standard')
   const { muted, toggleMute, playCount, playAlarm, playBoot } = useSound()
-  const { videoRef, isStreaming, videoReady, error: cameraError, debugLog, devices, startCamera, stopCamera, switchCamera, handleTapToPlay } = useCamera()
-  const v1 = useTripwire()
-  const v2 = useTripwireV2()
+  const { videoRef, isStreaming, videoReady, error: cameraError, debugLog, devices, startCamera, stopCamera, switchCamera, handleTapToPlay, cameraLocked, torchOn, toggleTorch } = useCamera()
   const v3 = useTripwireV3()
-  // Choose which tripwire drives the official count. V3 is the public default.
-  let active = v3
-  if (USE_V1) active = v1
-  else if (USE_V2) active = v2
+  const beam = useBeamOcclusion()
+  // Beam is the public default. ?v3=1 = pixel-diff tripwire fallback.
+  const active = USE_V3 ? v3 : beam
   const { tripwireY, isTriggered, setOnTrigger } = active
 
   // Wire tripwire trigger → increment count + sound + alert check
@@ -134,12 +129,11 @@ function CounterPage() {
     })
   }, [setCount, setSessionCount, setOnTrigger, playCount, isPremium, alertTarget, alertFired, playAlarm])
 
-  // Start all three tripwires in parallel when video is ready (for A/B/C comparison)
+  // Start only the active detector when video is ready — sequential testing means
+  // accuracy comparisons are clean (one detector = one camera = one ground truth).
   useEffect(() => {
     if (isRunning && videoReady && videoRef.current) {
-      v1.startTripwire(videoRef.current)
-      v2.startTripwire(videoRef.current)
-      v3.startTripwire(videoRef.current)
+      active.startTripwire(videoRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, videoReady, videoRef])
@@ -171,9 +165,8 @@ function CounterPage() {
 
   const handleStop = () => {
     setIsRunning(false)
-    v1.stopTripwire()
-    v2.stopTripwire()
     v3.stopTripwire()
+    beam.stopTripwire()
     stopCamera()
   }
 
@@ -239,12 +232,11 @@ function CounterPage() {
     }
   }
 
-  // Cleanup on unmount — stop all tripwires
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      v1.stopTripwire()
-      v2.stopTripwire()
       v3.stopTripwire()
+      beam.stopTripwire()
       stopCamera()
       clearTimeout(resetTimerRef.current)
     }
@@ -262,9 +254,8 @@ function CounterPage() {
     const rect = cameraContainerRef.current.getBoundingClientRect()
     const clientY = e.touches ? e.touches[0].clientY : e.clientY
     const y = Math.max(0.1, Math.min(0.9, (clientY - rect.top) / rect.height))
-    v1.setTripwireY(y)
-    v2.setTripwireY(y)
     v3.setTripwireY(y)
+    beam.setTripwireY(y)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDragging])
 
@@ -356,24 +347,38 @@ function CounterPage() {
                 onTouchStart={handleDragStart}
               >
                 <span className="tripwire-label">
-                  {`TRIPWIRE${USE_V1 ? ' V1' : ''}${USE_V2 && !USE_V1 ? ' V2' : ''}`}
+                  {USE_V3 ? 'TRIPWIRE V3' : 'BEAM'}
                 </span>
                 <span className="tripwire-handle" />
               </div>
             )}
 
-            {/* Dev A/B/C overlay — when ?v2=1 or ?v3=1 in URL */}
+            {/* Dev overlay — beam is default; ?v3=1 swaps to V3 fallback; ?dev=1 forces overlay on. */}
             {DEV_OVERLAY && isStreaming && (
               <div className="tripwire-ab-overlay">
-                <div>V1: {v1.triggerCount}</div>
-                <div>V2: {v2.triggerCount}</div>
-                <div>V3: {v3.triggerCount}</div>
-                <div className="ab-diag">v2 shake-rej: {v2.shakeRejects}</div>
-                <div className="ab-diag">v2 dir-rej: {v2.directionRejects}</div>
-                <div className="ab-diag">v3 shake-rej: {v3.shakeRejects}</div>
-                <div className="ab-diag">v3 expired: {v3.expiredPrimes}</div>
-                <div className="ab-diag">v3 upward-rej: {v3.upwardRejects}</div>
-                <div className="ab-active">[active: {(() => { if (USE_V1) return 'V1'; if (USE_V2) return 'V2'; return 'V3' })()}]</div>
+                <div className="ab-active">[active: {USE_V3 ? 'V3' : 'BEAM'}]</div>
+                <div>count: {active.triggerCount}</div>
+                <div className="ab-diag">cam-lock: {cameraLocked ? 'ON' : 'auto'}</div>
+                {USE_V3 ? (
+                  <>
+                    <div className="ab-diag">shake-rej: {v3.shakeRejects}</div>
+                    <div className="ab-diag">expired: {v3.expiredPrimes}</div>
+                    <div className="ab-diag">upward-rej: {v3.upwardRejects}</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="ab-diag">baseline: {beam.baselineValue.toFixed(1)}</div>
+                    <div className="ab-diag">current: {beam.currentValue.toFixed(1)}</div>
+                    <div className="ab-diag">dip: {(beam.dipDepth * 100).toFixed(1)}%</div>
+                  </>
+                )}
+                <button
+                  className="ab-diag"
+                  style={{ marginTop: 4, padding: '2px 6px', fontSize: 'inherit', cursor: 'pointer' }}
+                  onClick={toggleTorch}
+                >
+                  torch: {torchOn ? 'ON' : 'off'}
+                </button>
               </div>
             )}
 

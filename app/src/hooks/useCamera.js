@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 
-// Custom hook for camera access with iOS support + camera switching
+// Custom hook for camera access with iOS support + camera switching.
+// Also locks exposure/white-balance/focus 1.5s after stream starts so the detector
+// doesn't fight the phone's auto-exposure hunt — the #1 cause of false motion events.
 export function useCamera() {
   const videoRef = useRef(null)
   const [isStreaming, setIsStreaming] = useState(false)
@@ -9,7 +11,11 @@ export function useCamera() {
   const [debugLog, setDebugLog] = useState([])
   const [devices, setDevices] = useState([])
   const [activeDeviceIndex, setActiveDeviceIndex] = useState(0)
+  const [cameraLocked, setCameraLocked] = useState(false)
+  const [lockedSettings, setLockedSettings] = useState(null)
+  const [torchOn, setTorchOn] = useState(false)
   const streamRef = useRef(null)
+  const lockTimerRef = useRef(null)
 
   const log = useCallback((msg) => {
     console.warn('[Camera]', msg)
@@ -72,11 +78,14 @@ export function useCamera() {
       log('Requesting camera permission...')
       let stream
 
-      // Build constraints — use deviceId if specified, otherwise prefer rear camera
+      // Build constraints — use deviceId if specified, otherwise prefer rear camera.
+      // Request 60fps so fast-falling bottles get more sampling chances. Phones fall
+      // back to 30fps gracefully if not supported.
+      const videoBase = { frameRate: { ideal: 60 } }
       const constraints = {
         video: deviceId
-          ? { deviceId: { exact: deviceId } }
-          : { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } },
+          ? { ...videoBase, deviceId: { exact: deviceId } }
+          : { ...videoBase, facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } },
         audio: false
       }
 
@@ -143,6 +152,74 @@ export function useCamera() {
     }
   }, [log, enumeratecameras, attachReadyListeners])
 
+  // Lock exposure / white-balance / focus after AE/AWB have converged.
+  // Only applies controls the device actually supports. iOS Safari typically
+  // exposes none of these — the call is then a no-op and we keep auto-mode.
+  const lockCamera = useCallback(async () => {
+    const track = streamRef.current?.getVideoTracks?.()[0]
+    if (!track || typeof track.getCapabilities !== 'function') {
+      log('Lock: getCapabilities unavailable (likely iOS Safari) — staying on auto')
+      return
+    }
+    const caps = track.getCapabilities() || {}
+    const advanced = {}
+    if (Array.isArray(caps.exposureMode) && caps.exposureMode.includes('manual')) {
+      advanced.exposureMode = 'manual'
+    }
+    if (Array.isArray(caps.whiteBalanceMode) && caps.whiteBalanceMode.includes('manual')) {
+      advanced.whiteBalanceMode = 'manual'
+    }
+    if (Array.isArray(caps.focusMode) && caps.focusMode.includes('manual')) {
+      advanced.focusMode = 'manual'
+    }
+    if (Object.keys(advanced).length === 0) {
+      log(`Lock: no manual controls supported (caps: ${Object.keys(caps).join(',') || 'none'})`)
+      return
+    }
+    try {
+      await track.applyConstraints({ advanced: [advanced] })
+      const settings = track.getSettings?.() || {}
+      setCameraLocked(true)
+      setLockedSettings({
+        exposureMode: settings.exposureMode,
+        whiteBalanceMode: settings.whiteBalanceMode,
+        focusMode: settings.focusMode,
+      })
+      log(`Lock applied: ${Object.keys(advanced).join(',')}`)
+    } catch (err) {
+      log(`Lock failed: ${err.name} ${err.message}`)
+    }
+  }, [log])
+
+  // Optional torch toggle — fixes ambient lighting for the detector regardless of room
+  const toggleTorch = useCallback(async () => {
+    const track = streamRef.current?.getVideoTracks?.()[0]
+    if (!track || typeof track.getCapabilities !== 'function') return false
+    const caps = track.getCapabilities() || {}
+    if (!caps.torch) {
+      log('Torch: not supported on this camera')
+      return false
+    }
+    const next = !torchOn
+    try {
+      await track.applyConstraints({ advanced: [{ torch: next }] })
+      setTorchOn(next)
+      log(`Torch: ${next ? 'on' : 'off'}`)
+      return true
+    } catch (err) {
+      log(`Torch toggle failed: ${err.message}`)
+      return false
+    }
+  }, [torchOn, log])
+
+  // Auto-lock 1.5s after the video first reports dimensions — lets AE/AWB converge
+  // on the actual scene before we freeze it.
+  useEffect(() => {
+    if (!videoReady || cameraLocked) return
+    lockTimerRef.current = setTimeout(() => { lockCamera() }, 1500)
+    return () => clearTimeout(lockTimerRef.current)
+  }, [videoReady, cameraLocked, lockCamera])
+
   // Switch to next available camera
   const switchCamera = useCallback(async () => {
     if (devices.length < 2) return
@@ -166,6 +243,7 @@ export function useCamera() {
   }, [log])
 
   const stopCamera = useCallback(() => {
+    clearTimeout(lockTimerRef.current)
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop())
       streamRef.current = null
@@ -176,6 +254,9 @@ export function useCamera() {
     }
     setIsStreaming(false)
     setVideoReady(false)
+    setCameraLocked(false)
+    setLockedSettings(null)
+    setTorchOn(false)
   }, [])
 
   // Cleanup on unmount
@@ -195,6 +276,11 @@ export function useCamera() {
     startCamera,
     stopCamera,
     switchCamera,
-    handleTapToPlay
+    handleTapToPlay,
+    cameraLocked,
+    lockedSettings,
+    torchOn,
+    toggleTorch,
+    lockCamera,
   }
 }
