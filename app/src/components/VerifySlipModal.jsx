@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { supabase } from '../lib/supabase'
 
 // Modal for uploading a redemption slip photo to verify a session
 export function VerifySlipModal({ sessionId, onClose, onUploaded }) {
@@ -14,12 +15,22 @@ export function VerifySlipModal({ sessionId, onClose, onUploaded }) {
     setError(null)
 
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        setError('Please sign in to verify')
+        setUploading(false)
+        return
+      }
+
       const formData = new FormData()
       formData.append('file', file)
       formData.append('session_id', sessionId)
 
       const res = await fetch('/api/upload-slip', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: formData,
       })
 

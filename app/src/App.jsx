@@ -477,12 +477,11 @@ function CounterPage() {
   )
 }
 
-// Admin route guard — checks email against env var
+// Admin route guard — reads profile.is_admin from DB (RLS-enforced)
 function AdminRoute({ element }) {
-  const { user, loading } = useAuth()
-  const adminEmail = import.meta.env.VITE_ADMIN_EMAIL
+  const { user, isAdmin, loading } = useAuth()
   if (loading) return null
-  if (!user || !adminEmail || user.email !== adminEmail) {
+  if (!user || !isAdmin) {
     // eslint-disable-next-line react-hooks/immutability
     window.location.href = '/'
     return null

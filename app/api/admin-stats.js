@@ -165,8 +165,26 @@ export default async function handler(req, res) {
             count: sess.count || 0,
             deposit_value: sess.deposit_value || 0,
             state_code: stateCode,
+            signed_image_url: null,
           }
         })
+
+        // Bucket is private — generate short-lived signed URLs so the admin can view slips.
+        // Backward-compat: older rows stored a public URL; new rows store the storage path.
+        try {
+          const paths = pendingVerifications.map(v =>
+            v.image_url?.startsWith('http') ? v.image_url.split('/verification-slips/')[1] : v.image_url
+          )
+          const { data: signed } = await supabase.storage
+            .from('verification-slips')
+            .createSignedUrls(paths, 600)
+          pendingVerifications = pendingVerifications.map((v, i) => ({
+            ...v,
+            signed_image_url: signed?.[i]?.signedUrl || null,
+          }))
+        } catch (signErr) {
+          console.error('Signed URL generation failed:', signErr.message)
+        }
       }
     } catch { /* table may not exist */ }
 

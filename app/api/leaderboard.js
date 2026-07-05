@@ -108,11 +108,19 @@ export default async function handler(req, res) {
       .slice(0, 50)
 
     // Global stats (all users, all time, not just opted-in)
-    const { data: allSessions } = await supabase
-      .from('counting_sessions')
-      .select('count')
-
-    const totalBottles = (allSessions || []).reduce((sum, s) => sum + (s.count || 0), 0)
+    // Prefer a DB-side aggregate; fall back to a JS sum if the RPC isn't present.
+    // TODO: move to SQL sum() RPC (sum_session_counts) permanently once deployed.
+    let totalBottles = 0
+    try {
+      const { data: rpcTotal, error: rpcErr } = await supabase.rpc('sum_session_counts')
+      if (rpcErr) throw rpcErr
+      totalBottles = Number(rpcTotal) || 0
+    } catch {
+      const { data: allSessions } = await supabase
+        .from('counting_sessions')
+        .select('count')
+      totalBottles = (allSessions || []).reduce((sum, s) => sum + (s.count || 0), 0)
+    }
 
     const { count: totalCounters } = await supabase
       .from('profiles')
@@ -129,6 +137,6 @@ export default async function handler(req, res) {
     })
   } catch (err) {
     console.error('Leaderboard error:', err)
-    return res.status(200).json({ ...DEMO_DATA, error: err.message, period })
+    return res.status(200).json({ ...DEMO_DATA, period })
   }
 }

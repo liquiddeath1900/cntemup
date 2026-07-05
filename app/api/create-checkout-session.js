@@ -2,6 +2,7 @@
 // POST /api/create-checkout-session (requires Bearer token)
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit, clientIp } from './_ratelimit.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 const supabase = createClient(
@@ -9,9 +10,21 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
+// Pin redirect URLs to the apex — never trust the forgeable req.headers.origin.
+const ORIGIN = process.env.PUBLIC_ORIGIN || 'https://cntemup.com'
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  // Rate limit by IP first — burns one Upstash command per request, fails open.
+  // Blocks unauth spam before we even hit Supabase auth.
+  const ip = clientIp(req)
+  const rl = await checkRateLimit(`ip:${ip}`)
+  if (!rl.allowed) {
+    res.setHeader('Retry-After', Math.ceil((rl.reset - Date.now()) / 1000))
+    return res.status(429).json({ error: 'Too many requests. Try again later.' })
   }
 
   // JWT auth — verify caller identity
@@ -56,8 +69,8 @@ export default async function handler(req, res) {
           quantity: 1,
         },
       ],
-      success_url: `${req.headers.origin}/settings?upgraded=true`,
-      cancel_url: `${req.headers.origin}/settings`,
+      success_url: `${ORIGIN}/settings?upgraded=true`,
+      cancel_url: `${ORIGIN}/settings`,
     })
 
     res.status(200).json({ url: session.url })
