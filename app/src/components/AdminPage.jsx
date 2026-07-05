@@ -137,9 +137,13 @@ export function AdminPage() {
                           <div>Count: {v.count} ({v.state_code})</div>
                           <div>Deposit: ${Number(v.deposit_value || 0).toFixed(2)}</div>
                           <div>
-                            <a href={v.image_url} target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa' }}>
-                              View Slip Photo
-                            </a>
+                            {v.signed_image_url ? (
+                              <a href={v.signed_image_url} target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa' }}>
+                                View Slip Photo
+                              </a>
+                            ) : (
+                              <span style={{ color: 'var(--gb-text-dim)' }}>slip unavailable</span>
+                            )}
                           </div>
                           <div>Session: {v.session_id}</div>
                           <div className="admin-verify-actions" onClick={(e) => e.stopPropagation()}>

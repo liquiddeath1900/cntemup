@@ -12,10 +12,9 @@ import { themeList } from '../lib/themes'
 // Settings page — plan status, upgrade, alerts, navigation
 export function Settings() {
   const [searchParams] = useSearchParams()
-  const { user, profile, signOut, isLocal, refreshProfile, updateAlertTarget, updateState, updateContainerType, signInWithGoogle, updateLeaderboardVisibility } = useAuth()
+  const { user, profile, signOut, isLocal, isAdmin, refreshProfile, updateAlertTarget, updateState, updateContainerType, signInWithGoogle, updateLeaderboardVisibility } = useAuth()
   const { isPremium, alertTarget, subscriptionStatus, premiumSince } = usePremium(profile)
   const { themeId, setTheme } = useTheme()
-  const isAdmin = user?.email?.toLowerCase() === (import.meta.env.VITE_ADMIN_EMAIL || '').toLowerCase()
   const [alertInput, setAlertInput] = useState(alertTarget || '')
   const [showUpgradeSuccess, setShowUpgradeSuccess] = useState(false)
   const [checkoutLoading, setCheckoutLoading] = useState(false)

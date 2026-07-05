@@ -50,7 +50,7 @@ async function ensureProfile(userId, userMeta) {
   // Try to fetch existing profile
   const { data: existing } = await supabase
     .from('profiles')
-    .select('user_id, display_name, full_name, state_code, container_type, is_premium, subscription_status, alert_target, show_on_leaderboard, created_at, updated_at')
+    .select('user_id, display_name, full_name, state_code, container_type, is_premium, subscription_status, alert_target, show_on_leaderboard, is_admin, created_at, updated_at')
     .eq('user_id', userId)
     .single()
 
@@ -66,6 +66,7 @@ async function ensureProfile(userId, userMeta) {
     is_premium: false,
     alert_target: 0,
     show_on_leaderboard: false,
+    is_admin: false,
   }
 
   const { data: created, error } = await supabase
@@ -174,7 +175,7 @@ function useAuthInternal() {
     if (!supabaseEnabled || !user || user.id === 'local') return null
     const { data } = await supabase
       .from('profiles')
-      .select('user_id, display_name, full_name, state_code, container_type, is_premium, subscription_status, alert_target, show_on_leaderboard, created_at, updated_at')
+      .select('user_id, display_name, full_name, state_code, container_type, is_premium, subscription_status, alert_target, show_on_leaderboard, is_admin, created_at, updated_at')
       .eq('user_id', user.id)
       .single()
     if (data) setProfile(data)
@@ -367,6 +368,7 @@ function useAuthInternal() {
     loading,
     error,
     isLocal: !supabaseEnabled || user?.id === 'local',
+    isAdmin: !!profile?.is_admin,
     setupLocal,
     signUp,
     signIn,
