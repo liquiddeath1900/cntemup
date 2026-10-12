@@ -266,6 +266,20 @@ export function Settings() {
           )}
         </div>
 
+        {/* Side missions — extra ways to play, kept off the main counter screen */}
+        <div className="settings-section">
+          <h2 className="settings-section-title">SIDE MISSIONS</h2>
+          <p className="settings-section-desc">
+            Quick challenges. Whatever you count still goes toward your total.
+          </p>
+          <div className="settings-nav-links">
+            <Link to="/app?mission=30s" className="settings-nav-link">
+              <span>30 SECOND CHALLENGE</span>
+              <span>▶</span>
+            </Link>
+          </div>
+        </div>
+
         {/* Navigation links */}
         <div className="settings-section">
           <h2 className="settings-section-title">MORE</h2>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useSearchParams } from 'react-router-dom'
 import { LandingPage } from './components/LandingPage'
 import { Counter } from './components/Counter'
 import { Auth } from './components/Auth'
@@ -32,10 +32,12 @@ import { useTheme } from './hooks/useTheme'
 import { usePremium } from './hooks/usePremium'
 import { useHistory } from './hooks/useHistory'
 import { getRank } from './lib/ranks'
+import { shareScoreCard } from './lib/scoreCard'
 import { supabase, supabaseEnabled } from './lib/supabase'
 import './App.css'
 
 const SESSIONS_KEY = 'cntemup_sessions'
+const SET_HINT_KEY = 'cntemup_set_hint_seen'
 
 // Validate session rate — flag suspicious counts (never blocks, just flags)
 function validateSession(count, durationSeconds, previousBest) {
@@ -97,6 +99,26 @@ function CounterPage() {
   const [verifySessionId, setVerifySessionId] = useState(null)
   const cameraContainerRef = useRef(null)
   const sessionStartRef = useRef(null)
+  const [shareState, setShareState] = useState('idle')
+  // Side missions are picked in Settings and arrive here as ?mission=30s
+  const [searchParams, setSearchParams] = useSearchParams()
+  const missionOn = searchParams.get('mission') === '30s'
+  // One-time pointer at the SET button, so people find the missions and the leaderboard
+  const [showSetHint, setShowSetHint] = useState(() => {
+    try {
+      return localStorage.getItem(SET_HINT_KEY) !== '1'
+    } catch {
+      return false
+    }
+  })
+  const dismissSetHint = () => {
+    setShowSetHint(false)
+    try {
+      localStorage.setItem(SET_HINT_KEY, '1')
+    } catch {
+      /* storage unavailable — it just shows again next time */
+    }
+  }
 
   const { user, profile, isLocal } = useAuth()
   const { isPremium, alertTarget } = usePremium(profile)
@@ -111,8 +133,9 @@ function CounterPage() {
   const active = USE_V3 ? v3 : beam
   const { tripwireY, isTriggered, setOnTrigger } = active
 
-  // Time Attack — 30-second challenge. Its score is kept apart from the session count,
-  // so a fast run never trips the session rate checks or lands in history.
+  // Time Attack — 30-second challenge. While it runs, hits go to the challenge score.
+  // When it ends, those items join the session count, so SAVE puts them in history
+  // like any other counted bottles.
   const stopAllRef = useRef(() => {})
   const {
     phase: taPhase, phaseRef: taPhaseRef, countdown: taCountdown, secondsLeft: taSecondsLeft,
@@ -120,9 +143,15 @@ function CounterPage() {
     arm: taArm, startCountdown: taStartCountdown, registerHit: taRegisterHit, reset: taReset,
   } = useTimeAttack({
     onTick: playCount,
-    onFinish: () => {
+    onFinish: (finalScore) => {
       stopAllRef.current()
       playSuccess()
+      if (finalScore > 0) {
+        // the session started when the challenge clock did
+        if (!sessionStartRef.current) sessionStartRef.current = Date.now() - TIME_ATTACK_SECONDS * 1000
+        setCount(prev => prev + finalScore)
+        setSessionCount(prev => prev + finalScore)
+      }
     },
   })
   const taActive = taPhase !== 'idle' && taPhase !== 'done'
@@ -205,6 +234,20 @@ function CounterPage() {
   const handleTimeAttack = () => {
     taArm()
     handleStart()
+  }
+
+  const exitMission = () => {
+    const next = new URLSearchParams(searchParams)
+    next.delete('mission')
+    setSearchParams(next, { replace: true })
+  }
+
+  // Share the current count as an image — the everyday way to spread the word
+  const handleShareCount = async () => {
+    setShareState('working')
+    const result = await shareScoreCard({ score: sessionCount })
+    setShareState(result === 'saved' ? 'saved' : 'idle')
+    if (result === 'saved') setTimeout(() => setShareState('idle'), 1800)
   }
 
   const handleResetAll = () => {
@@ -366,7 +409,14 @@ function CounterPage() {
           <h1>CNTEM'UP{isPremium && <span className="pro-badge">PRO</span>}</h1>
           <div className="header-right">
             <span className="rank-badge-mini" style={{ color: myRank.color }}>{myRank.badge}</span>
-            <a href="/settings" className="settings-link">SET</a>
+            <a href="/settings" className="settings-link" onClick={dismissSetHint}>SET</a>
+            {showSetHint && !isRunning && !missionOn && (
+              <button className="set-hint" onClick={dismissSetHint} aria-label="Dismiss tip">
+                <span className="set-hint-arrow" aria-hidden="true" />
+                TAP SET FOR CHALLENGES + LEADERBOARD
+                <span className="set-hint-close" aria-hidden="true">✕</span>
+              </button>
+            )}
           </div>
         </div>
         <p>Bottle & Can Counter</p>
@@ -508,12 +558,6 @@ function CounterPage() {
             {resetConfirm ? 'SURE?' : 'RESET ALL'}
           </button>
 
-          {!isRunning && sessionCount === 0 && (
-            <button className="gb-action-btn gb-challenge-btn" onClick={handleTimeAttack}>
-              {TIME_ATTACK_SECONDS}s CHALLENGE
-            </button>
-          )}
-
           {sessionCount > 0 && !taActive && (
             <button
               className="gb-action-btn gb-save-btn"
@@ -524,6 +568,23 @@ function CounterPage() {
             </button>
           )}
         </div>
+
+        {/* Second row: the side mission when one is picked, otherwise sharing the count */}
+        {missionOn && !isRunning && (
+          <div className="gb-action-row">
+            <button className="gb-action-btn gb-challenge-btn" onClick={handleTimeAttack}>
+              START {TIME_ATTACK_SECONDS}s CHALLENGE
+            </button>
+            <button className="gb-action-btn gb-reset-btn" onClick={exitMission}>EXIT</button>
+          </div>
+        )}
+        {!missionOn && sessionCount > 0 && !taActive && (
+          <div className="gb-action-row">
+            <button className="gb-action-btn gb-share-btn" onClick={handleShareCount} disabled={shareState === 'working'}>
+              {{ idle: 'SHARE COUNT', working: 'MAKING...', saved: 'SAVED!' }[shareState]}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Debug — dev only */}

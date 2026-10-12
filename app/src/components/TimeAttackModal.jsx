@@ -25,6 +25,7 @@ export function TimeAttackModal({ score, best, isRecord, onAgain, onClose }) {
         ) : (
           <p className="ta-modal-best">BEST: {best}</p>
         )}
+        {score > 0 && <p className="ta-modal-unit">ADDED TO YOUR COUNT. HIT SAVE TO KEEP IT.</p>}
         <button className="gb-action-btn gb-save-btn ta-modal-share" onClick={handleShare} disabled={shareState === 'working'}>
           {SHARE_LABEL[shareState]}
         </button>

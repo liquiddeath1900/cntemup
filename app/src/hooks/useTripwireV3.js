@@ -147,8 +147,13 @@ export function useTripwireV3() {
 
   const processFrameRef = useRef(null)
 
+  // Whether the loop should keep going. A ref, not the `isRunning` state: the first
+  // frame after startTripwire can run before React has re-rendered, and a stale
+  // `isRunning === false` there would stop the loop for good (nothing ever counts).
+  const runningRef = useRef(false)
+
   const processFrame = useCallback((video, timestamp) => {
-    if (!isRunning) return
+    if (!runningRef.current) return
 
     const elapsed = timestamp - lastFrameTime.current
     if (elapsed < 1000 / TARGET_FPS) {
@@ -268,7 +273,7 @@ export function useTripwireV3() {
     prevLinesRef.current = currentLines
 
     rafRef.current = requestAnimationFrame((ts) => processFrameRef.current(video, ts))
-  }, [isRunning, tripwireY, getRegionRGB, compareRGB, compareRGBPerCell, findClusters, lineOffset])
+  }, [tripwireY, getRegionRGB, compareRGB, compareRGBPerCell, findClusters, lineOffset])
 
   useEffect(() => {
     processFrameRef.current = processFrame
@@ -280,11 +285,13 @@ export function useTripwireV3() {
     primedEventsRef.current = []
     lastFireAtRef.current = 0
     lastFrameTime.current = 0
+    runningRef.current = true
     setIsRunning(true)
     rafRef.current = requestAnimationFrame((ts) => processFrameRef.current(video, ts))
   }, [])
 
   const stopTripwire = useCallback(() => {
+    runningRef.current = false
     setIsRunning(false)
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current)

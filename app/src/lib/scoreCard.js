@@ -1,4 +1,5 @@
-// Score card — draws a shareable image of a Time Attack result in the active theme's colors.
+// Score card — draws a shareable image in the active theme's colors.
+// With `seconds` it is a challenge result; without, it is a plain count.
 
 const W = 1080
 const H = 1350
@@ -48,7 +49,7 @@ export async function makeScoreCard({ score, seconds, isRecord }) {
   ctx.fillStyle = dark
   ctx.fillRect(170, 270, W - 340, 76)
   ctx.fillStyle = bg
-  ctx.fillText(`${seconds} SECOND CHALLENGE`, W / 2, 322)
+  ctx.fillText(seconds ? `${seconds} SECOND CHALLENGE` : 'COUNTED WITH MY PHONE', W / 2, 322)
 
   // The score, as big as it will fit
   const text = String(score)
@@ -66,7 +67,7 @@ export async function makeScoreCard({ score, seconds, isRecord }) {
   }
 
   ctx.font = `46px ${FONT}`
-  ctx.fillText('CAN YOU BEAT IT?', W / 2, 1100)
+  ctx.fillText(seconds ? 'CAN YOU BEAT IT?' : 'COUNT YOURS FREE', W / 2, 1100)
 
   ctx.font = `30px ${FONT}`
   ctx.fillStyle = dark
@@ -81,7 +82,9 @@ export async function shareScoreCard({ score, seconds, isRecord }) {
   const blob = await makeScoreCard({ score, seconds, isRecord })
   if (!blob) return 'cancelled'
   const file = new File([blob], `cntemup-${score}.png`, { type: 'image/png' })
-  const text = `I counted ${score} bottles and cans in ${seconds} seconds on CNTEM'UP. Can you beat it? cntemup.com`
+  const text = seconds
+    ? `I counted ${score} bottles and cans in ${seconds} seconds on CNTEM'UP. Can you beat it? cntemup.com`
+    : `I just counted ${score} bottles and cans with my phone camera on CNTEM'UP. cntemup.com`
 
   if (navigator.canShare?.({ files: [file] })) {
     try {
