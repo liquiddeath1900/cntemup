@@ -12,9 +12,11 @@ import { AlertModal } from './components/AlertModal'
 import { NotFound } from './components/NotFound'
 import { RankUpModal } from './components/RankUpModal'
 import { VerifySlipModal } from './components/VerifySlipModal'
+import { TimeAttackModal } from './components/TimeAttackModal'
 import { useCamera } from './hooks/useCamera'
 import { useTripwireV3 } from './hooks/useTripwireV3'
 import { useBeamOcclusion } from './hooks/useBeamOcclusion'
+import { useTimeAttack, TIME_ATTACK_SECONDS } from './hooks/useTimeAttack'
 
 // Beam-occlusion is the public default (luminance dip-and-recover, lighting-invariant).
 // ?v3=1 falls back to the 5-line pixel-diff tripwire (escape hatch for phones where
@@ -101,7 +103,7 @@ function CounterPage() {
   const { stats: historyStats } = useHistory(user?.id, isLocal)
   const myRank = getRank(historyStats?.totalBottles || 0)
   const { rules, depositRate, calculateDeposit } = useDepositRules(profile?.state_code, profile?.container_type || 'standard')
-  const { muted, toggleMute, playCount, playAlarm, playBoot } = useSound()
+  const { muted, toggleMute, playCount, playAlarm, playBoot, playSuccess } = useSound()
   const { videoRef, isStreaming, videoReady, error: cameraError, debugLog, devices, startCamera, stopCamera, switchCamera, handleTapToPlay, cameraLocked, torchOn, toggleTorch } = useCamera()
   const v3 = useTripwireV3()
   const beam = useBeamOcclusion()
@@ -109,9 +111,30 @@ function CounterPage() {
   const active = USE_V3 ? v3 : beam
   const { tripwireY, isTriggered, setOnTrigger } = active
 
+  // Time Attack — 30-second challenge. Its score is kept apart from the session count,
+  // so a fast run never trips the session rate checks or lands in history.
+  const stopAllRef = useRef(() => {})
+  const {
+    phase: taPhase, phaseRef: taPhaseRef, countdown: taCountdown, secondsLeft: taSecondsLeft,
+    score: taScore, best: taBest, isRecord: taIsRecord,
+    arm: taArm, startCountdown: taStartCountdown, registerHit: taRegisterHit, reset: taReset,
+  } = useTimeAttack({
+    onTick: playCount,
+    onFinish: () => {
+      stopAllRef.current()
+      playSuccess()
+    },
+  })
+  const taActive = taPhase !== 'idle' && taPhase !== 'done'
+
   // Wire tripwire trigger → increment count + sound + alert check
   useEffect(() => {
     setOnTrigger(() => {
+      // During a challenge, hits go to the challenge score only (and only once the clock runs)
+      if (taPhaseRef.current !== 'idle') {
+        if (taRegisterHit()) playCount()
+        return
+      }
       // Track session start time on first item
       if (!sessionStartRef.current) sessionStartRef.current = Date.now()
       setCount(prev => prev + 1)
@@ -127,18 +150,21 @@ function CounterPage() {
       })
       playCount()
     })
-  }, [setCount, setSessionCount, setOnTrigger, playCount, isPremium, alertTarget, alertFired, playAlarm])
+  }, [setCount, setSessionCount, setOnTrigger, playCount, isPremium, alertTarget, alertFired, playAlarm, taPhaseRef, taRegisterHit])
 
   // Start only the active detector when video is ready — sequential testing means
   // accuracy comparisons are clean (one detector = one camera = one ground truth).
   useEffect(() => {
     if (isRunning && videoReady && videoRef.current) {
       active.startTripwire(videoRef.current)
+      // Camera is live — a waiting challenge can start its 3-2-1 (which covers detector warmup)
+      taStartCountdown()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, videoReady, videoRef])
 
   const handleManualAdd = () => {
+    if (taActive) return // challenge scores come from the camera only
     if (!sessionStartRef.current) sessionStartRef.current = Date.now()
     setCount(prev => prev + 1)
     setSessionCount(prev => prev + 1)
@@ -146,6 +172,7 @@ function CounterPage() {
   }
 
   const handleManualSub = () => {
+    if (taActive) return
     if (count > 0) {
       setCount(prev => prev - 1)
       setSessionCount(prev => Math.max(0, prev - 1))
@@ -168,6 +195,16 @@ function CounterPage() {
     v3.stopTripwire()
     beam.stopTripwire()
     stopCamera()
+    // STOP mid-challenge cancels it; a finished challenge keeps its result on screen
+    if (taPhaseRef.current !== 'done') taReset()
+  }
+  useEffect(() => {
+    stopAllRef.current = handleStop
+  })
+
+  const handleTimeAttack = () => {
+    taArm()
+    handleStart()
   }
 
   const handleResetAll = () => {
@@ -296,6 +333,17 @@ function CounterPage() {
         />
       )}
 
+      {/* Time Attack result */}
+      {taPhase === 'done' && (
+        <TimeAttackModal
+          score={taScore}
+          best={taBest}
+          isRecord={taIsRecord}
+          onAgain={handleTimeAttack}
+          onClose={taReset}
+        />
+      )}
+
       {/* Alert modal */}
       {showAlertModal && (
         <AlertModal
@@ -382,6 +430,20 @@ function CounterPage() {
               </div>
             )}
 
+            {/* Time Attack HUD */}
+            {taActive && (
+              <div className="ta-hud">
+                {taPhase === 'arming' && <span className="ta-hud-ready">GET READY</span>}
+                {taPhase === 'countdown' && <span className="ta-hud-big" key={taCountdown}>{taCountdown}</span>}
+                {taPhase === 'running' && (
+                  <div className={`ta-hud-bar ${taSecondsLeft <= 5 ? 'ta-hud-bar-last' : ''}`}>
+                    <span>TIME {String(taSecondsLeft).padStart(2, '0')}</span>
+                    <span>GO!</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Camera switch */}
             {devices.length > 1 && isStreaming && (
               <button className="camera-switch-btn" onClick={switchCamera}>↻</button>
@@ -405,8 +467,8 @@ function CounterPage() {
 
           {/* Count display */}
           <Counter
-            count={count}
-            sessionCount={sessionCount}
+            count={taActive ? taScore : count}
+            sessionCount={taActive ? taScore : sessionCount}
             isDetecting={isRunning && isStreaming}
             depositRate={depositRate}
             stateCode={profile?.state_code}
@@ -446,7 +508,13 @@ function CounterPage() {
             {resetConfirm ? 'SURE?' : 'RESET ALL'}
           </button>
 
-          {sessionCount > 0 && (
+          {!isRunning && sessionCount === 0 && (
+            <button className="gb-action-btn gb-challenge-btn" onClick={handleTimeAttack}>
+              {TIME_ATTACK_SECONDS}s CHALLENGE
+            </button>
+          )}
+
+          {sessionCount > 0 && !taActive && (
             <button
               className="gb-action-btn gb-save-btn"
               onClick={handleSaveSession}

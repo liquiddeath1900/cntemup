@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase, supabaseEnabled } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import { trackVisit } from '../lib/tracking'
+import { LandingDemo, RigDiagram } from './LandingDemo'
 
 const WAITLIST_KEY = 'cntemup_waitlist'
 const USER_KEY = 'cntemup_user'
@@ -114,6 +115,9 @@ export function LandingPage() {
           <h1 className="landing-title">CNTEM'UP</h1>
           <p className="landing-subtitle">BOTTLE & CAN COUNTER</p>
         </div>
+
+        {/* Playable demo — the product in ten seconds, no camera needed */}
+        <LandingDemo />
       </section>
 
       {/* ===== HOW IT WORKS — Main content ===== */}
@@ -123,22 +127,12 @@ export function LandingPage() {
         <div className="setup-card">
           <div className="setup-card-header">
             <span className="setup-card-num">STEP 1</span>
-            <span className="setup-card-title">PROP YOUR PHONE</span>
+            <span className="setup-card-title">SET UP YOUR PHONE</span>
           </div>
           <div className="setup-diagram">
-            <pre className="setup-ascii">{`
-     ┌─────────┐
-     │ ┌─────┐ │
-     │ │ CAM │ │  ← Phone propped up
-     │ │ ~~~ │ │     facing the table
-     │ │ 047 │ │
-     │ └─────┘ │
-     └────┬────┘
-          │╲
-     ═════╧══════  ← Table / surface
-            `}</pre>
+            <RigDiagram />
           </div>
-          <p className="setup-tip">Lean your phone against anything — a book, a mug, a wall. Camera facing the surface where items will pass.</p>
+          <p className="setup-tip">A tripod or phone stand works best. Keep the phone upright and pointed straight at the bin, not tilted up. Stand behind the phone and throw past it, along the dotted line. No stand? Prop it so it sits level.</p>
         </div>
 
         <div className="setup-card">
@@ -260,7 +254,7 @@ export function LandingPage() {
             <span>📏</span> Keep items 6-18 inches from camera for best results.
           </div>
           <div className="setup-protip">
-            <span>📐</span> Use a tripod or prop your phone so it stays completely still.
+            <span>📐</span> Tripod or stand, phone upright and level. It has to stay completely still.
           </div>
           <div className="setup-protip">
             <span>🎨</span> Use a solid color background for the cleanest detection.

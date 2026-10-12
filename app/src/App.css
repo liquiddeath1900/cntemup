@@ -3324,6 +3324,227 @@ body {
   transform: scale(0.95);
 }
 
+/* ===== LANDING DEMO ===== */
+.lp-demo {
+  width: 100%;
+  max-width: 360px;
+  margin: 18px auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 2;
+}
+
+.lp-demo-hint {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  line-height: 1.6;
+  min-height: 1.6em;
+  color: var(--gb-screen-light);
+  text-align: center;
+}
+
+.lp-demo-screen {
+  position: relative;
+  width: 100%;
+  border: 3px solid var(--gb-screen-dark);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--gb-screen-bg);
+}
+
+.lp-demo-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 160 / 190;
+  image-rendering: pixelated;
+  touch-action: none;
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lp-demo-label {
+  position: absolute;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: var(--gb-text-dim);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* positions are the canvas's own coordinates (160 x 190), as percentages */
+.lp-demo-label-app { left: calc(5 / 160 * 100%); top: calc(62 / 190 * 100%); }
+.lp-demo-rig-labels { position: absolute; inset: 0; pointer-events: none; }
+.lp-demo-label-wire { left: calc(6 / 160 * 100%); top: calc(104 / 190 * 100%); color: var(--gb-danger); }
+.lp-demo-label-bin { left: 50%; top: calc(101 / 190 * 100%); transform: translateX(-50%); }
+.lp-demo-label-flick { left: 50%; top: calc(126 / 190 * 100%); transform: translateX(-50%); color: var(--gb-screen-light); font-size: 8px; }
+
+.lp-demo-lcd {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px 10px;
+  padding: 10px 12px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--gb-screen-light);
+  background: var(--gb-screen-bg);
+  border: 2px solid var(--gb-screen-dark);
+  border-radius: 6px;
+}
+
+.lp-demo-lcd strong {
+  font-size: var(--font-sm, 12px);
+  font-weight: normal;
+}
+
+.lp-demo-lcd small {
+  font-size: 7px;
+  color: var(--gb-text-dim);
+}
+
+
+.lp-rig {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.lp-rig-light { fill: var(--gb-screen-light); }
+.lp-rig-fill { fill: var(--gb-screen-dark); }
+.lp-rig-view { fill: var(--gb-screen-light); opacity: 0.12; }
+.lp-rig-wire rect { fill: var(--gb-danger); }
+.lp-rig-guide rect, .lp-rig-guide polygon { fill: var(--gb-warning); }
+
+.lp-rig-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  fill: var(--gb-text-dim);
+}
+
+.lp-rig-text-wire { fill: var(--gb-danger); }
+
+/* ===== TIME ATTACK ===== */
+.gb-challenge-btn {
+  background: linear-gradient(180deg, #ffd24a, #e0a400);
+  color: #3a2a00;
+  font-weight: bold;
+  box-shadow: 0 4px 0 #9a7000;
+}
+
+.gb-challenge-btn:active {
+  box-shadow: 0 1px 0 #9a7000;
+}
+
+.ta-hud {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-family: 'Press Start 2P', monospace;
+  color: var(--gb-screen-light);
+}
+
+.ta-hud-ready {
+  font-size: var(--font-md);
+  padding: 10px 14px;
+  background: var(--gb-screen-bg);
+  border: 2px solid var(--gb-screen-dark);
+}
+
+.ta-hud-big {
+  font-size: clamp(64px, 26vw, 120px);
+  text-shadow: 0 0 18px var(--gb-screen-bg), 4px 4px 0 var(--gb-screen-bg);
+  animation: taCountPop 1s ease-out both;
+}
+
+@keyframes taCountPop {
+  0% { transform: scale(1.6); opacity: 0; }
+  20% { transform: scale(1); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: scale(0.85); opacity: 0.2; }
+}
+
+.ta-hud-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 10px;
+  font-size: var(--font-xs);
+  background: var(--gb-screen-bg);
+  border-bottom: 2px solid var(--gb-screen-dark);
+}
+
+.ta-hud-bar-last {
+  color: var(--gb-danger);
+  animation: taBlink 0.5s steps(2) infinite;
+}
+
+@keyframes taBlink {
+  50% { opacity: 0.45; }
+}
+
+.ta-modal-label,
+.ta-modal-unit,
+.ta-modal-best,
+.ta-modal-record {
+  font-family: 'Press Start 2P', monospace;
+  font-size: var(--font-xs);
+  color: var(--gb-text-dim);
+  text-align: center;
+}
+
+.ta-modal-score {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(56px, 20vw, 84px);
+  line-height: 1.1;
+  color: var(--gb-screen-light);
+  text-shadow: 0 0 16px var(--gb-screen-glow);
+}
+
+.ta-modal-record {
+  color: var(--gb-warning);
+  animation: taBlink 0.8s steps(2) infinite;
+}
+
+.ta-modal-share {
+  margin-top: 10px;
+}
+
+.ta-modal-done {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  padding: 10px;
+  background: none;
+  border: none;
+  color: var(--gb-text-dim);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ta-hud-big,
+  .ta-hud-bar-last,
+  .ta-modal-record {
+    animation: none;
+  }
+}
+
 /* ===== DESKTOP LAYOUT ===== */
 @media (min-width: 768px) {
   .settings-page {
