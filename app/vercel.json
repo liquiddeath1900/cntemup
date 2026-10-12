@@ -38,12 +38,12 @@
     }
   ],
   "rewrites": [
-    { "source": "/app", "destination": "/index.html" },
-    { "source": "/settings", "destination": "/index.html" },
-    { "source": "/login", "destination": "/index.html" },
-    { "source": "/history", "destination": "/index.html" },
-    { "source": "/tips", "destination": "/index.html" },
-    { "source": "/leaderboard", "destination": "/index.html" },
-    { "source": "/admin", "destination": "/index.html" }
+    { "source": "/app", "destination": "/index" },
+    { "source": "/settings", "destination": "/index" },
+    { "source": "/login", "destination": "/index" },
+    { "source": "/history", "destination": "/index" },
+    { "source": "/tips", "destination": "/index" },
+    { "source": "/leaderboard", "destination": "/index" },
+    { "source": "/admin", "destination": "/index" }
   ]
 }
